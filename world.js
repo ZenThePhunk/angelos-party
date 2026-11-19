@@ -42,6 +42,7 @@ const FONTS = { black: (z) => `${z}px "UnifrakturMaguntia", "Old English Text MT
 let doodle = null;   // the little dog drawing from the real menu
 const doodleReady = new Promise((res) => { const im = new Image(); im.onload = () => { doodle = im; res(); }; im.onerror = res; im.src = 'images/bar-menu.jpg'; });
 export const cardImages = new Map();
+const flowerDisplays = [];   // the big flower pieces (bar tower, food-table towers): walking up to one shows "Flowers by Brophy"
 function typesetCard(lines, { withDoodle = false } = {}) {
   const W = 1428, Hh = 2000, maxW = W - 110;
   const c = document.createElement('canvas'); c.width = W; c.height = Hh; const g = c.getContext('2d');
@@ -830,7 +831,7 @@ export function buildWorld(scene, Q) {
 
   mergeStatic(world, dynamic, new Set(occluders.concat([plainFloor, reflectFloor].filter(Boolean))));
   return {
-    world, colliders, occluders, tick, readables, band, bartenders, chand, disco, reflectFloor, plainFloor,
+    world, colliders, occluders, tick, readables, band, bartenders, flowerDisplays, chand, disco, reflectFloor, plainFloor,
     dropReflections() { if (!reflectFloor) return; world.remove(reflectFloor); world.add(plainFloor); reflectFloor = null; },
   };
 }
@@ -921,7 +922,7 @@ function foodSpread(cx, y, za, zb) {
 }
 // tall pink-and-red celosia / carnation piece
 function celosiaTower(x, y, z) {
-  const g = new THREE.Group(); g.position.set(x, y, z);
+  const g = new THREE.Group(); g.position.set(x, y, z); flowerDisplays.push(g);
   g.add(M(new THREE.BoxGeometry(0.12, 0.1, 0.12), new THREE.MeshStandardMaterial({ color: '#d9dadc', metalness: 1, roughness: 0.25 }), 0, 0.05, 0));
   const cols = ['#e2204e', '#ef3d6c', '#d81c3a', '#f25582', '#c8102e'];
   const N = 70, im = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.05, 1), new THREE.MeshStandardMaterial({ roughness: 0.85, flatShading: true }), N);
@@ -947,7 +948,7 @@ function flowerCluster(x, y, z, size = 0.2) {
   return g;
 }
 function flowerTower(x, y, z) {
-  const g = new THREE.Group(); g.position.set(x, y, z);
+  const g = new THREE.Group(); g.position.set(x, y, z); flowerDisplays.push(g);
   const petal = new THREE.MeshStandardMaterial({ roughness: 0.55 });
   // roses: lots of small blooms packed into a tapering column
   const roseG = mergeGeometries([new THREE.SphereGeometry(0.03, 8, 6).scale(1, 0.8, 1), new THREE.TorusGeometry(0.032, 0.014, 6, 12).rotateX(Math.PI / 2).translate(0, -0.006, 0)].map((q) => q.toNonIndexed()));

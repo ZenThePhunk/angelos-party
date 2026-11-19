@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- Renders one start-screen portrait full-window so headless Chrome can screenshot it into images/couple-<kind>.png
+     Usage: tools/make_portraits.sh (needs tools/serve.py running on 8125) -->
+<html><head><style>html,body{margin:0;background:transparent;overflow:hidden}</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }</script></head>
+<body><script type="module">
+import * as THREE from 'three';
+import { makeCharacter } from '../characters.js';
+const kind = new URLSearchParams(location.search).get('kind') || 'austin';
+const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.setPixelRatio(1);
+r.setSize(300, 400); r.outputColorSpace = THREE.SRGBColorSpace; r.setClearColor(0, 0); document.body.appendChild(r.domElement);
+const s = new THREE.Scene();
+s.add(new THREE.HemisphereLight('#fff4ea', '#5a2a22', 2.4));
+const d = new THREE.DirectionalLight('#ffffff', 1.6); d.position.set(2, 3, 4); s.add(d);
+const rim = new THREE.DirectionalLight('#ff4030', 2.2); rim.position.set(-3, 2, -3); s.add(rim);
+const c = makeCharacter(kind); c.root.rotation.y = kind === 'austin' ? 0.3 : -0.3; c.update(0, 0, 0); s.add(c.root);
+const cam = new THREE.PerspectiveCamera(28, 300 / 400, 0.1, 20); cam.position.set(0, 1.05, kind === 'austin' ? 3.85 : 3.6); cam.lookAt(0, kind === 'austin' ? 0.95 : 0.88, 0);
+setTimeout(() => r.render(s, cam), 800);   // give painted textures a moment
+</script></body></html>

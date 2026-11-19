@@ -74,6 +74,7 @@ function labelSprite(text, { size = 64, w = 512, h = 128 } = {}) {
 }
 
 let spouseCollider = null, myKind = null;
+let brophyOn = false, brophyD = 1; const _fwd = new THREE.Vector3(), _fp = new THREE.Vector3();
 // Austin and Bre dance together on the dance floor; guests walk in as themselves (first person)
 const couple = [];
 function placeCouple() {
@@ -167,9 +168,7 @@ function portrait(kind, close = false, turn = 0.25) {
   if (close) { c.root.rotation.y = turn; cam.position.set(0, c.eye, 0.9); cam.lookAt(0, c.eye - 0.02, 0); }
   r.render(s, cam); const url = r.domElement.toDataURL('image/png'); r.dispose(); r.forceContextLoss(); return url;
 }
-document.fonts.load('80px "Great Vibes"').catch(() => {}).finally(() => {
-  $('#couple-a').src = portrait('austin'); $('#couple-b').src = portrait('bre');
-});
+// the start-screen pictures are pre-rendered files (images/couple-*.png, made by tools/make_portraits.sh) so they show instantly
 
 // ── music: "Them Changes" through YouTube's own player ──
 const SONG = 'GNCd_ERZvZM';
@@ -290,6 +289,7 @@ function showBooth(i) {
 }
 function closeBooth() { if (!$('#boothBig').hidden) { $('#boothBig').hidden = true; return; } $('#booth').hidden = true; reading = false; if (galleryKey === 'tyler') tylerResume(); if (!isTouch) tryLock(); }
 $('#booth .x').onclick = () => { $('#boothBig').hidden = true; closeBooth(); };
+$('#boothBig .x').onclick = (e) => { e.stopPropagation(); $('#boothBig').hidden = true; };   // back to the grid of photos
 $('#boothBig').addEventListener('click', (e) => { if (e.target.closest('.prev')) showBooth(boothIdx - 1); else if (e.target.closest('.next')) showBooth(boothIdx + 1); else $('#boothBig').hidden = true; });
 addEventListener('keydown', (e) => {
   if ($('#booth').hidden) return;
@@ -373,7 +373,7 @@ canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   for (const t of e.changedTouches) {
     if (joy && t.identifier === joy.id) { let dx = t.clientX - joy.x0, dy = t.clientY - joy.y0; const d = Math.hypot(dx, dy); if (d > 55) { dx *= 55 / d; dy *= 55 / d; } joy.dx = dx; joy.dy = dy; knob.style.transform = `translate(${dx}px,${dy}px)`; }
-    else if (lookT && t.identifier === lookT.id) { look((t.clientX - lookT.x) * 2.4, (t.clientY - lookT.y) * 2.4); lookT.x = t.clientX; lookT.y = t.clientY; }
+    else if (lookT && t.identifier === lookT.id) { look((t.clientX - lookT.x) * 4.2, (t.clientY - lookT.y) * 3.4); lookT.x = t.clientX; lookT.y = t.clientY; }
   }
 }, { passive: false });
 const tEnd = (e) => { for (const t of e.changedTouches) { if (joy && t.identifier === joy.id) { joy = null; joyEl.hidden = true; $('#touchHelp').classList.remove('walking'); } if (lookT && t.identifier === lookT.id) { $('#touchHelp').classList.remove('looking'); if (Math.hypot(t.clientX - lookT.x0, t.clientY - lookT.y0) < 12 && performance.now() - lookT.t0 < 350) { const r = readableAt((t.clientX / innerWidth) * 2 - 1, -(t.clientY / innerHeight) * 2 + 1); if (r) openCard(r); } lookT = null; } } };
@@ -389,7 +389,7 @@ function toggleView() {
 $('#enter').addEventListener('click', () => {
   $('#start').classList.add('gone'); $('#hud').hidden = false; $('#music').hidden = false;
   $('#hint').innerHTML = 'Welcome in! Austin & Bre are right up ahead. Controls are in the top corner.';
-  playing = true; startMusic(); tryLock();
+  playing = true; if (isTouch) $('#music').classList.add('min'); else startMusic(); tryLock();   // phones: the YouTube box starts folded away, tap Play music to open it
   if (isTouch) $('#touchHelp').hidden = false;
   checkRotate();
   setTimeout(() => $('#hint').classList.add('fade'), 10000);
@@ -501,6 +501,23 @@ function frame() {
     if (r !== tapTarget) { tapTarget = r; $('#tapBtn').hidden = !r; if (r) $('#tapBtn').textContent = r.open === 'game' ? `▶ Tap to play ${r.name}` : r.open === 'booth' ? '📸 Tap to see the photo booth pictures' : r.open === 'tyler' ? "📷 Tap to see Tyler's photos" : `Tap to read the ${r.name.toLowerCase()}`; }
   } else if (tapTarget) { tapTarget = null; $('#tapBtn').hidden = true; }
   if (playing && !isTouch && !reading) { const r = locked() ? readableAt(0, 0) : readableAt(mouseN.x, mouseN.y); $('#readHint').hidden = !r; if (r) $('#readHint').textContent = r.open === 'game' ? `Click to play ${r.name}` : r.open === 'booth' ? 'Click to see the photo booth pictures' : r.open === 'tyler' ? "Click to see Tyler's photos" : `Click to read the ${r.name.toLowerCase()}`; }
+  {   // walk up to a big flower piece and look at it: "Flowers by Brophy" glows in the middle of the screen
+    let see = false;
+    if (playing && !reading) {
+      camera.getWorldDirection(_fwd);
+      for (const f of W.flowerDisplays) {
+        f.getWorldPosition(_fp); _fp.y += 0.4; _fp.sub(camera.position);
+        const d = _fp.length(); if (d < 2.6 && _fp.normalize().dot(_fwd) > 0.82) { see = f; brophyD = d; break; }
+      }
+    }
+    if (see) {   // pin the words in front of the flowers: follow them on screen, bigger as you get closer
+      see.getWorldPosition(_fp); _fp.y += 0.35; _fp.project(camera);
+      const el = $('#brophy');
+      el.style.left = ((_fp.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - _fp.y) / 2 * innerHeight) + 'px';
+      el.style.setProperty('--s', Math.max(0.45, Math.min(1.25, 1.5 / brophyD)).toFixed(3));
+    }
+    if (!!see !== brophyOn) { brophyOn = !!see; $('#brophy').classList.toggle('on', brophyOn); }
+  }
   if (!arcadeOpen) composer.render();
 
   // if the computer is struggling, drop the floor reflections

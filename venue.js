@@ -12,7 +12,7 @@ export const VENUE = {
   wallHeight: 13.5,        // brick walls
   peakHeight: 20,          // top of the arched ceiling
 
-  spawn: { x: 91, z: 14.7, facing: [-1, 0] },        // just inside the garage door, looking at the band
+  spawn: { x: 93.4, z: 18.6, facing: [-1, 0.1] },     // just inside the garage door: Joyce and the welcome table ahead, dining tables on the left, band far ahead
 
   garageDoor: { z1: 1.9, z2: 21.6 },                 // east wall
   frontDoor: { z1: 25, z2: 28.5 },                   // east wall
