@@ -389,7 +389,7 @@ function toggleView() {
 $('#enter').addEventListener('click', () => {
   $('#start').classList.add('gone'); $('#hud').hidden = false; $('#music').hidden = false;
   $('#hint').innerHTML = 'Welcome in! Austin & Bre are right up ahead. Controls are in the top corner.';
-  playing = true; if (isTouch) $('#music').classList.add('min'); else startMusic(); tryLock();   // phones: the YouTube box starts folded away, tap Play music to open it
+  playing = true; startMusic(); tryLock();   // music starts with the Enter tap on phones and computers (the tap lets phones play sound)
   if (isTouch) $('#touchHelp').hidden = false;
   checkRotate();
   setTimeout(() => $('#hint').classList.add('fade'), 10000);
