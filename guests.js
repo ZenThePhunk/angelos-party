@@ -157,12 +157,10 @@ function makeJoyce(ctx) {
   // small gold earrings
   const gold = new THREE.MeshStandardMaterial({ color: '#d8b25a', metalness: 1, roughness: 0.3 });
   for (const sd of [1, -1]) p.head.add(mesh(new THREE.SphereGeometry(0.009, 8, 6), gold, 0.104 * sd, 1.635 - 0.035, 0));
-  // Joyce is working the room: tidying the coat racks, straightening the welcome table and the dining tables.
+  // Joyce is working the room: straightening the welcome table and the dining tables.
   // When you walk up she stops, turns, waves and says "Welcome!"
   const stations = [
     { at: [85.5, 19.2], look: [84.0, 17.9], h: 1.08, d: 0.34 },     // welcome table: straightening the cards and flowers
-    { at: [91.9, 31.6], look: [93.6, 31.6], h: 1.4, d: 0.36 },      // coat rack: neatening the coats
-    { at: [91.9, 35.6], look: [93.6, 35.6], h: 1.3, d: 0.36 },
     { at: [87.5, 28.3], look: [85.9, 28.3], h: 0.8, d: 0.4 },       // end of a dining table: fixing a place setting
     { at: [87.5, 35.5], look: [85.9, 35.5], h: 0.8, d: 0.4 },
   ].map((o) => ({ ...o, at: [o.at[0] * FT, o.at[1] * FT], yaw: Math.atan2((o.look[0] - o.at[0]), (o.look[1] - o.at[1])) }));
@@ -180,7 +178,7 @@ function makeJoyce(ctx) {
     if (live && st.mode !== 'greet' && toP < 3.4 && st.greetedAt < 0) { st.mode = 'greet'; st.greetT = 3.2; st.greetedAt = t; }   // greets you once, the first time you come close
     if (st.mode === 'greet') {               // turn to you, wave, "Welcome!"
       st.speed = 0; turn(Math.atan2(P0.x - st.x, P0.z - st.z), dt * 6); st.greetT -= dt;
-      if (st.greetT <= 0) { st.mode = 'walk'; st.i = 3; }   // after welcoming you she heads over to fix up the dining tables
+      if (st.greetT <= 0) { st.mode = 'walk'; st.i = 1; }   // after welcoming you she heads over to fix up the dining tables
     } else if (st.mode === 'walk') {
       const [tx, tz] = stations[st.i].at, dx = tx - st.x, dz = tz - st.z, d = Math.hypot(dx, dz);
       if (d < 0.06) { st.mode = 'work'; st.timer = 6 + Math.random() * 5; st.speed = 0; }

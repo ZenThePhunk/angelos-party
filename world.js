@@ -243,33 +243,47 @@ export function buildWorld(scene, Q) {
     gd.rotation.y = -Math.PI / 2; add(gd);
     for (const z of [gz1, gz2]) add(M(new THREE.BoxGeometry(0.12, gh, 0.12), steel, L - 0.06, gh / 2, z));
     add(M(new THREE.BoxGeometry(0.12, 0.14, gz2 - gz1 + 0.12), steel, L - 0.06, gh, (gz1 + gz2) / 2));
-    // two rolling coat racks along the wall past the front door, full of guests' coats
-    for (const zc of [f(31.6), f(35.6)]) {
-      const rx = L - 0.45, len = 1.1, steelR = std({ color: '#b9bcc2', metalness: 1, roughness: 0.3 });
-      for (const s2 of [-1, 1]) {
-        add(M(new THREE.CylinderGeometry(0.013, 0.013, 1.62, 8), steelR, rx, 0.86, zc + s2 * len / 2));
-        add(M(new THREE.BoxGeometry(0.42, 0.025, 0.03), steelR, rx, 0.07, zc + s2 * len / 2));
-        for (const s3 of [-1, 1]) add(M(new THREE.SphereGeometry(0.03, 8, 6), black, rx + s3 * 0.19, 0.03, zc + s2 * len / 2));
+    // electrical boxes on the seating wall, just right of the two chrome clothing racks (as you face them): grey panels with conduit up the brick
+    {
+      const panelM = std({ color: '#8d9196', metalness: 0.6, roughness: 0.45 }), darkM = std({ color: '#5b5f64', metalness: 0.5, roughness: 0.5 });
+      const conduitM = std({ color: '#a7abb0', metalness: 0.8, roughness: 0.3 });
+      const boxes = [[81.6, 0.5, 0.75, 1.45], [80.1, 0.4, 0.55, 1.35], [79.0, 0.22, 0.3, 1.2]];
+      for (const [xf, w, h, y] of boxes) {
+        const x = f(xf), z = D - 0.06;
+        add(M(new THREE.BoxGeometry(w, h, 0.1), panelM, x, y, z));                                     // the box
+        add(M(new THREE.BoxGeometry(w - 0.06, h - 0.06, 0.012), darkM, x, y, z - 0.055));              // door seam
+        add(M(new THREE.BoxGeometry(0.025, 0.06, 0.02), darkM, x - w / 2 + 0.06, y, z - 0.065));       // latch
+        add(M(new THREE.CylinderGeometry(0.022, 0.022, f(13.5) - (y + h / 2), 10), conduitM, x, (y + h / 2 + f(13.5)) / 2, D - 0.045));   // conduit up to the ceiling
+        add(M(new THREE.CylinderGeometry(0.018, 0.018, y - h / 2 - 0.75, 10), conduitM, x, (y - h / 2 + 0.75) / 2, D - 0.045));            // drop to the low run
       }
-      const bar = M(new THREE.CylinderGeometry(0.012, 0.012, len, 8), steelR, rx, 1.66, zc); bar.rotation.x = Math.PI / 2; add(bar);
-      const cols = ['#141414', '#7a5a3a', '#5a1a22', '#2c3a52', '#1d1d20', '#8b7d6b', '#3b2a20', '#101012'];
-      for (let i = 0; i < 7; i++) {
-        const z = zc - len / 2 + 0.12 + i * (len - 0.24) / 6 + Math.sin(i * 7.1) * 0.02, c = cols[(i + (zc > f(33) ? 3 : 0)) % cols.length];
-        add(M(new THREE.TorusGeometry(0.022, 0.003, 4, 10, Math.PI * 1.4), steelR, rx, 1.665, z).rotateY(Math.PI / 2));                  // hanger hook
-        const coat = new THREE.Group(); coat.position.set(rx, 1.6, z); coat.rotation.y = Math.PI / 2 + Math.sin(i * 3.3) * 0.1; add(coat);
-        coat.add(M(new THREE.BoxGeometry(0.46, 0.05, 0.05), std({ color: '#2a2622', roughness: 0.6 }), 0, 0.02, 0));                       // hanger
-        const body = M(new THREE.CylinderGeometry(0.2, 0.27, 0.85 + Math.sin(i * 2.7) * 0.15, 10, 1, true), std({ color: c, roughness: 0.85, side: THREE.DoubleSide }), 0, -0.45, 0);
-        body.scale.z = 0.32; coat.add(body);
-        const sh = M(new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), std({ color: c, roughness: 0.85 }), 0, -0.03, 0); sh.scale.set(1.15, 0.25, 0.4); coat.add(sh);   // shoulders
-      }
-      box(rx - 0.25, zc - len / 2 - 0.05, rx + 0.25, zc + len / 2 + 0.05);
+      const run = M(new THREE.CylinderGeometry(0.018, 0.018, f(81.6) - f(79.0), 10), conduitM, (f(81.6) + f(79.0)) / 2, 0.75, D - 0.045); run.rotation.z = Math.PI / 2; add(run);   // low conduit tying them together
     }
     const fz1 = f(V.frontDoor.z1), fz2 = f(V.frontDoor.z2);
     const door = M(new THREE.BoxGeometry(0.05, 2.2, fz2 - fz1), std({ color: '#ece6dc', roughness: 0.6 }), L - 0.03, 1.1, (fz1 + fz2) / 2); add(door);
     for (const [y, hh] of [[1.55, 0.8], [0.55, 0.8]]) add(M(new THREE.BoxGeometry(0.02, hh, fz2 - fz1 - 0.25), std({ color: '#ddd5c8', roughness: 0.6 }), L - 0.065, y, (fz1 + fz2) / 2));
     add(M(new THREE.SphereGeometry(0.03, 10, 8), std({ color: '#c9a45c', metalness: 1, roughness: 0.3 }), L - 0.09, 1.05, fz2 - 0.12));
     add(M(new THREE.BoxGeometry(0.06, 0.08, 1.14), std({ color: '#ece6dc' }), L - 0.04, 2.24, (fz1 + fz2) / 2));
-    for (const [z, y, hh] of [[f(35), 1.5, 0.7], [f(36.6), 1.6, 0.5]]) add(M(new THREE.BoxGeometry(0.12, hh, 0.4), std({ color: '#6c6a66', metalness: 0.4, roughness: 0.5 }), L - 0.07, y, z));
+    // big white three-part window on this wall, left of the clothing racks (two-by-four grid in each sash), dark night outside
+    {
+      const wc = (f(V.frontDoor.z2) + D) / 2, half = f(8) * 0.64 / 2;   // 36% smaller than the first version, centered between the front door and the corner
+      const y2 = 2.2, y1 = y2 - 1.6 * 0.64;                                 // top lines up with the top of the front door
+      const z1 = wc - half, z2 = wc + half, zc = (z1 + z2) / 2, yc = (y1 + y2) / 2, ww = z2 - z1, hh = y2 - y1;
+      const frameM = std({ color: '#f1efea', roughness: 0.5 }), x = L - 0.05;
+      add(M(new THREE.PlaneGeometry(ww, hh), new THREE.MeshStandardMaterial({ color: '#0a0e18', roughness: 0.08, metalness: 0.6, emissive: '#0b1224', emissiveIntensity: 0.6 }), L - 0.075, yc, zc).rotateY(-Math.PI / 2));   // night glass
+      const bar = (zz, yy, wz, hy, d = 0.09) => add(M(new THREE.BoxGeometry(d, hy, wz), frameM, x - 0.02, yy, zz));
+      bar(zc, y2 + 0.05, ww + 0.2, 0.1); bar(zc, y1 - 0.05, ww + 0.2, 0.1);          // head and bottom of the outer frame
+      bar(z1 - 0.05, yc, 0.1, hh + 0.2); bar(z2 + 0.05, yc, 0.1, hh + 0.2);           // sides
+      add(M(new THREE.BoxGeometry(0.16, 0.05, ww + 0.3), frameM, L - 0.09, y1 - 0.12, zc));   // sill
+      const sw = ww / 3;
+      for (let i = 0; i < 3; i++) {
+        const sz1 = z1 + i * sw, szc = sz1 + sw / 2;
+        if (i) bar(sz1, yc, 0.09, hh, 0.1);                                             // posts between the sashes
+        for (const zz of [sz1 + 0.05, sz1 + sw - 0.05]) bar(zz, yc, 0.04, hh, 0.07);     // sash sides
+        bar(szc, y1 + 0.03, sw, 0.05, 0.07); bar(szc, y2 - 0.03, sw, 0.05, 0.07);
+        bar(szc, yc, 0.025, hh, 0.05);                                                   // muntin: two columns
+        for (let r = 1; r < 4; r++) bar(szc, y1 + hh * r / 4, sw - 0.08, 0.025, 0.05);   // muntins: four rows
+      }
+    }
   }
 
   // ── two chrome rolling clothing racks in the corner left of the garage door, with chrome hangers ──
@@ -543,7 +557,7 @@ export function buildWorld(scene, Q) {
     const column = (x, z) => { add(M(new THREE.BoxGeometry(0.42, 1.2, 0.4), std({ color: '#0e0e0e', roughness: 0.5 }), x, 0.6, z)); for (const [y, r] of [[0.85, 0.12], [0.45, 0.12]]) add(M(new THREE.CircleGeometry(r, 20), std({ color: '#262626', roughness: 0.8 }), x + 0.21, y, z).rotateY(Math.PI / 2)); };
     column(f(3.0), f(28.6)); column(f(3.0), f(19.4));
     add(flowerCluster(f(3.0), 1.2, f(28.6), 0.22));   // red flowers on top of the back speaker column (the plant behind the band is gone)
-    // music stands in front of guitar and sax, two flutes on stands front and center, and a pedalboard
+    // a music stand in front of the guitar, two flutes on stands front and center, and a pedalboard
     const musicStand = (x, z, ry) => {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry;
       for (let i = 0; i < 3; i++) { const a = i * 2.094; g.add(new THREE.Mesh(beam(new THREE.Vector3(Math.cos(a) * 0.22, 0.01, Math.sin(a) * 0.22), new THREE.Vector3(0, 0.35, 0), 0.012, 0.012), black)); }
@@ -551,7 +565,7 @@ export function buildWorld(scene, Q) {
       const desk = M(new THREE.BoxGeometry(0.48, 0.32, 0.01), black, 0, 1.2, 0.03); desk.rotation.x = -0.35; g.add(desk);
       add(g);
     };
-    musicStand(f(12.4), f(28.6), -Math.PI / 2); musicStand(f(12.4), f(19.4), -Math.PI / 2);
+    musicStand(f(12.4), f(28.6), -Math.PI / 2);   // in front of the guitarist (the sax player's stand was taken out)
     for (const zf of [23.2, 24.8]) { add(M(new THREE.CylinderGeometry(0.11, 0.11, 0.015, 3), black, f(13.0), 0.008, f(zf))); add(M(new THREE.CylinderGeometry(0.009, 0.009, 0.66, 10), chrome, f(13.0), 0.35, f(zf))); add(M(new THREE.CylinderGeometry(0.012, 0.012, 0.03, 10), std({ color: '#d4b04a', metalness: 1, roughness: 0.3 }), f(13.0), 0.03, f(zf))); }
     add(M(new THREE.BoxGeometry(0.5, 0.05, 0.22), std({ color: '#1a1a1a', roughness: 0.5 }), f(12.0), 0.025, f(30.4)));
     for (let i = 0; i < 4; i++) add(M(new THREE.BoxGeometry(0.09, 0.03, 0.12), std({ color: ['#c43a2a', '#e8b030', '#2c6fd0', '#2a2a2a'][i], roughness: 0.4 }), f(12.0), 0.06, f(30.4) - 0.18 + i * 0.12));
