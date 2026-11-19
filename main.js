@@ -128,7 +128,26 @@ function updateBubbles() {
 }
 
 let spouseCollider = null, myKind = null;
-let brophyOn = false, brophyD = 1; const _fwd = new THREE.Vector3(), _fp = new THREE.Vector3();
+const _fwd = new THREE.Vector3(), _fp = new THREE.Vector3();
+// glowing hover words: g = { el, objs: () => [Object3D], look: height to aim at, at: height to pin the words, range }
+function glowLabel(g) {
+  let see = null, dist = 1;
+  if (playing && !reading) {
+    camera.getWorldDirection(_fwd);
+    for (const o of g.objs()) {
+      o.getWorldPosition(_fp); _fp.y += g.look; _fp.sub(camera.position);
+      const d = _fp.length(); if (d < g.range && _fp.normalize().dot(_fwd) > 0.82) { see = o; dist = d; break; }
+    }
+  }
+  if (see) {   // follow it on screen, a little bigger as you get closer
+    see.getWorldPosition(_fp); _fp.y += g.at; _fp.project(camera);
+    g.el.style.left = ((_fp.x + 1) / 2 * innerWidth) + 'px'; g.el.style.top = ((1 - _fp.y) / 2 * innerHeight) + 'px';
+    g.el.style.setProperty('--s', Math.max(0.45, Math.min(1.25, 1.5 / dist)).toFixed(3));
+  }
+  if (!!see !== g.on) { g.on = !!see; g.el.classList.toggle('on', g.on); }
+}
+const glowFlowers = { el: $('#brophy'), objs: () => W.flowerDisplays, look: 0.4, at: 0.35, range: 2.6, on: false };
+const glowKristin = { el: $('#bestDressed'), objs: () => guests.map((g) => g.root), look: 1.2, at: 1.4, range: 3.0, on: false };   // Kristin
 // Austin and Bre dance together on the dance floor; guests walk in as themselves (first person)
 const couple = [];
 function placeCouple() {
@@ -556,23 +575,9 @@ function frame() {
     if (r !== tapTarget) { tapTarget = r; $('#tapBtn').hidden = !r; if (r) $('#tapBtn').textContent = r.open === 'game' ? `▶ Tap to play ${r.name}` : r.open === 'booth' ? '📸 Tap to see the photo booth pictures' : r.open === 'tyler' ? "📷 Tap to see Tyler's photos" : r.open === 'pet' ? '🐾 Tap to pet Sunny' : `Tap to read the ${r.name.toLowerCase()}`; }
   } else if (tapTarget) { tapTarget = null; $('#tapBtn').hidden = true; }
   if (playing && !isTouch && !reading) { const r = locked() ? readableAt(0, 0) : readableAt(mouseN.x, mouseN.y); $('#readHint').hidden = !r; if (r) $('#readHint').textContent = r.open === 'game' ? `Click to play ${r.name}` : r.open === 'booth' ? 'Click to see the photo booth pictures' : r.open === 'tyler' ? "Click to see Tyler's photos" : r.open === 'pet' ? 'Click to pet Sunny' : `Click to read the ${r.name.toLowerCase()}`; }
-  {   // walk up to a big flower piece and look at it: "Flowers by Brophy" glows in the middle of the screen
-    let see = false;
-    if (playing && !reading) {
-      camera.getWorldDirection(_fwd);
-      for (const f of W.flowerDisplays) {
-        f.getWorldPosition(_fp); _fp.y += 0.4; _fp.sub(camera.position);
-        const d = _fp.length(); if (d < 2.6 && _fp.normalize().dot(_fwd) > 0.82) { see = f; brophyD = d; break; }
-      }
-    }
-    if (see) {   // pin the words in front of the flowers: follow them on screen, bigger as you get closer
-      see.getWorldPosition(_fp); _fp.y += 0.35; _fp.project(camera);
-      const el = $('#brophy');
-      el.style.left = ((_fp.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - _fp.y) / 2 * innerHeight) + 'px';
-      el.style.setProperty('--s', Math.max(0.45, Math.min(1.25, 1.5 / brophyD)).toFixed(3));
-    }
-    if (!!see !== brophyOn) { brophyOn = !!see; $('#brophy').classList.toggle('on', brophyOn); }
-  }
+  // walk up to something and look at it: glowing words pinned in front of it
+  //   big flower pieces → "Flowers by Brophy Blooms"; Kristin → "Best Dressed"
+  glowLabel(glowFlowers, dt); glowLabel(glowKristin, dt);
   updateBubbles();
   if (!arcadeOpen) composer.render();
 
