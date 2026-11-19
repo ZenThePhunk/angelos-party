@@ -863,7 +863,7 @@ function mergeStatic(world, dynamic, keep) {
 // ── the food: dumplings, takeout boxes, onigiri ──
 let takeoutTex = null;
 function foodSpread(cx, y, za, zb) {
-  // laid out like the photos: steel trays (some up on folded-steel risers), takeout boxes, onigiri, yakitori, bao, karaage, two flower pieces
+  // laid out like the photos: steel trays (some up on folded-steel risers), takeout boxes, onigiri, yakitori, bao, karaage, and one big flower piece on the left end (as you face the table from the menu side)
   const g = new THREE.Group();
   const steel = new THREE.MeshStandardMaterial({ color: '#d9dadc', metalness: 1, roughness: 0.22 });
   const tray = (x, z, w, d, h = 0) => {      // a rimmed steel tray, optionally up on a folded-steel riser
@@ -912,7 +912,6 @@ function foodSpread(cx, y, za, zb) {
   const L = zb - za, at = (f) => za + L * f;
   baoOn(cx - 0.2, at(0.13), 0.3, 0.4);
   for (let i = 0; i < 6; i++) karaage(cx + 0.06 + (i % 2) * 0.1, at(0.06) + Math.floor(i / 2) * 0.1);
-  g.add(celosiaTower(cx - 0.18, y, at(0.36)));
   boxesOn(cx + 0.17, at(0.42), 0.32, 0.4, 4, 4, 0.12);
   boxesOn(cx - 0.12, at(0.64), 0.4, 0.42, 5, 4, 0);
   yakitoriOn(cx + 0.29, at(0.66), 0.2, 0.36);
