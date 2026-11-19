@@ -31,7 +31,7 @@ export const VENUE = {
     { x: 47.4, name: 'PELLET PANIC', look: 'maze' },
     { x: 50.6, name: 'BLOOD DUEL', look: 'duel' },
   ],
-  bar: { x1: 63.7, x2: 76.3, z1: 0.6, z2: 8.3, depth: 2.2 },
+  bar: { x1: 62.1, x2: 74.7, z1: 0.6, z2: 8.3, depth: 2.2 },
   band: { x1: 0.8, z1: 12.5, x2: 13.5, z2: 35.5 },
   chandelier: { x: 42, z: 21.1 },
   poolRug: { x1: 29.2, z1: 30.6, x2: 42.9, z2: 39.6 },

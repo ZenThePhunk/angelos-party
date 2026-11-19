@@ -174,15 +174,20 @@ export function buildWorld(scene, Q) {
     add(new THREE.Mesh(mergeGeometries(steelG), steel));
     // skylights (night sky through the glass)
     const sky = std({ color: '#0b1324', emissive: '#16223c', emissiveIntensity: 0.7, roughness: 0.2 });
-    for (const [x, z] of [[5.6, 4.2], [11.5, 8.6], [17.4, 4.2], [23.4, 8.6]]) { const s = M(new THREE.PlaneGeometry(1.9, 1.3), sky, x, archY(z) - 0.03, z); s.rotation.x = Math.PI / 2; s.rotation.y = 0; add(s); }
+    // square skylights, one on each side of the peak in every bay, mirrored, tilted to sit flush with the curved roof
+    for (const x of [5.6, 11.5, 17.4, 23.4]) for (const z of [D / 2 - 2.2, D / 2 + 2.2]) {
+      const slope = (archY(z + 0.01) - archY(z - 0.01)) / 0.02;
+      const s = M(new THREE.PlaneGeometry(1.9, 1.9), sky, x, archY(z) - 0.03 - 1.9 * 1.9 / (8 * RAD), z); s.rotation.x = Math.atan2(1, slope); add(s);   // square, dropped just enough that the curved roof doesn't cut its edges
+    }
     // red sprinkler pipes along the long walls
     const pipe = std({ color: '#8f1b17', roughness: 0.5, metalness: 0.3 });
     for (const z of [0.18, D - 0.18]) { const p = M(new THREE.CylinderGeometry(0.06, 0.06, L, 12), pipe, L / 2, WH - 0.3, z); p.rotation.z = Math.PI / 2; add(p); }
-    // fluorescent fixtures (off) + ceiling fans
-    for (const x of [5.6, 11.5, 17.4, 23.4]) for (const z of [D * 0.35, D * 0.65]) add(M(new THREE.BoxGeometry(1.2, 0.06, 0.18), std({ color: '#3a3532', roughness: 0.6 }), x, WH - 0.3, z));
-    for (const x of [8.5, 20.5]) {
-      const fan = new THREE.Group(); fan.position.set(x - 2.9, WH - 0.05, D / 2);
-      fan.add(M(new THREE.CylinderGeometry(0.012, 0.012, 0.5), steel, 0, 0.25, 0), M(new THREE.CylinderGeometry(0.11, 0.09, 0.12, 14), steel));
+    // ceiling fans (no fluorescent fixtures: Austin says there weren't any)
+    // each hangs from where the steel X braces cross in its bay, on a short stem down from the X
+    for (const x of [(2.7 + 8.5) / 2, (14.5 + 20.5) / 2]) {
+      const drop = 0.42, fan = new THREE.Group(); fan.position.set(x, WH - 0.1 - drop, D / 2);
+      fan.add(M(new THREE.CylinderGeometry(0.012, 0.012, drop), steel, 0, drop / 2, 0), M(new THREE.CylinderGeometry(0.11, 0.09, 0.12, 14), steel));
+      fan.add(M(new THREE.CylinderGeometry(0.035, 0.035, 0.03, 12), steel, 0, drop - 0.015, 0));   // little canopy clamped to the X
       for (let i = 0; i < 3; i++) { const b = M(new THREE.BoxGeometry(0.75, 0.015, 0.14), black, 0.42, -0.02, 0); const h = new THREE.Group(); h.rotation.y = i * 2.094; h.add(b); fan.add(h); }
       add(fan); dynamic.add(fan); tick.push((dt) => { fan.rotation.y += dt * 0.6; });
     }
@@ -511,8 +516,8 @@ export function buildWorld(scene, Q) {
         add(stand); readables.push({ obj: stand, canvas: card.canvas, img: 'images/bar-menu.jpg', name: 'Bar menu' });
       });
     }
-    for (const [xf, v] of [[70, 0], [66.2, 1]]) { const bt = makeBartender(v); bt.root.position.set(f(xf), 0, z2 - dp - 0.55); add(bt.root); bartenders.push(bt.root); dynamic.add(bt.root); tick.push((dt, t) => bt.update(dt, t + v * 2.7)); }
-    uplight(f(68), 0.42, 0, 1, AMBER, { h: 3.8, w: 1.7, off: 0.12, k: 1.35 });   // glow on the drape behind the bartenders
+    for (const [xf, v] of [[68.4, 0], [64.6, 1]]) { const bt = makeBartender(v); bt.root.position.set(f(xf), 0, z2 - dp - 0.55); add(bt.root); bartenders.push(bt.root); dynamic.add(bt.root); tick.push((dt, t) => bt.update(dt, t + v * 2.7)); }
+    uplight(f(66.4), 0.42, 0, 1, AMBER, { h: 3.8, w: 1.7, off: 0.12, k: 1.35 });   // glow on the drape behind the bartenders
   }
 
   // ── band: rug, LED tubes, speakers, monitors, the X and the red door ──

@@ -185,7 +185,7 @@ function makeJoyce(ctx) {
       if (d < 0.06) { st.mode = 'work'; st.timer = 6 + Math.random() * 5; st.speed = 0; }
       else { turn(Math.atan2(dx, dz), dt * 5); const step = Math.min(d, 0.85 * dt); st.x += dx / d * step; st.z += dz / d * step; st.speed = step / Math.max(dt, 1e-4); }
     } else {                                 // working at a station
-      st.speed = 0; turn(stations[st.i].yaw, dt * 4); st.timer -= dt;
+      st.speed = 0; turn(stations[st.i].yaw, dt * 4); if (st.greetedAt >= 0) st.timer -= dt;   // stays at the welcome table until she's welcomed you
       if (st.timer <= 0) { st.i = (st.i + 1 + Math.floor(Math.random() * 2)) % stations.length; st.mode = 'walk'; }
     }
     p.root.position.set(st.x, 0, st.z); p.root.rotation.y = st.yaw; col.circle[0] = st.x; col.circle[1] = st.z;
