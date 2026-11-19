@@ -166,7 +166,7 @@ function makeJoyce(ctx) {
     { at: [87.5, 28.3], look: [85.9, 28.3], h: 0.8, d: 0.4 },       // end of a dining table: fixing a place setting
     { at: [87.5, 35.5], look: [85.9, 35.5], h: 0.8, d: 0.4 },
   ].map((o) => ({ ...o, at: [o.at[0] * FT, o.at[1] * FT], yaw: Math.atan2((o.look[0] - o.at[0]), (o.look[1] - o.at[1])) }));
-  const st = { x: stations[0].at[0], z: stations[0].at[1], yaw: stations[0].yaw, i: 0, mode: 'work', timer: 6, speed: 0, greetT: 0, greetedAt: -99 };
+  const st = { x: stations[0].at[0], z: stations[0].at[1], yaw: stations[0].yaw, i: 0, mode: 'work', timer: 6, speed: 0, greetT: 0, greetedAt: -1 };
   p.root.position.set(st.x, 0, st.z); p.root.rotation.y = st.yaw; scene.add(p.root);
   const col = { circle: [st.x, st.z], r: 0.32 }; W.colliders.push(col);
   const tag = ctx.labelSprite('Joyce', { size: 70 }); if (tag) { tag.position.set(0, 2.02 * 1.8 / 1.62, 0); p.root.add(tag); }
@@ -177,10 +177,10 @@ function makeJoyce(ctx) {
   return { update(dt, t) {
     const P0 = ctx.player, live = ctx.isPlaying ? ctx.isPlaying() : true;
     const toP = P0 ? Math.hypot(P0.x - st.x, P0.z - st.z) : 99;
-    if (live && st.mode !== 'greet' && toP < 3.4 && t - st.greetedAt > 45) { st.mode = 'greet'; st.greetT = 3.2; st.greetedAt = t; }
+    if (live && st.mode !== 'greet' && toP < 3.4 && st.greetedAt < 0) { st.mode = 'greet'; st.greetT = 3.2; st.greetedAt = t; }   // greets you once, the first time you come close
     if (st.mode === 'greet') {               // turn to you, wave, "Welcome!"
       st.speed = 0; turn(Math.atan2(P0.x - st.x, P0.z - st.z), dt * 6); st.greetT -= dt;
-      if (st.greetT <= 0) { st.mode = 'work'; st.timer = Math.max(st.timer, 3); }
+      if (st.greetT <= 0) { st.mode = 'walk'; st.i = 3; }   // after welcoming you she heads over to fix up the dining tables
     } else if (st.mode === 'walk') {
       const [tx, tz] = stations[st.i].at, dx = tx - st.x, dz = tz - st.z, d = Math.hypot(dx, dz);
       if (d < 0.06) { st.mode = 'work'; st.timer = 6 + Math.random() * 5; st.speed = 0; }

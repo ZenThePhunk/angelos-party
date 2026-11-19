@@ -24,7 +24,7 @@ renderer.setPixelRatio(Q.pixelRatio);
 renderer.setSize(innerWidth || 1, innerHeight || 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.05;   // 5% brighter (Austin, 11/18)
 renderer.shadowMap.enabled = true;     // only used so the disco ball can project its specks
 renderer.shadowMap.type = THREE.PCFShadowMap;
 setAniso(renderer.capabilities.getMaxAnisotropy());
@@ -78,15 +78,21 @@ function labelSprite(text, { size = 64, w = 512, h = 128 } = {}) {
 // speechBubble(text) → { visible, anchors: [Object3D at each speaker's mouth] }  (two anchors = a shared line with two tails)
 const bubbles = [];
 const tailSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); tailSvg.id = 'tails'; document.body.appendChild(tailSvg);
-function speechBubble(text, { side = 'right' } = {}) {   // side: which side of the speaker's face the bubble sits on
+function speechBubble(text, { side = 'right', once = true, secs = 4 } = {}) {   // once: says it only the first time, for `secs` seconds   // side: which side of the speaker's face the bubble sits on
   const el = document.createElement('div'); el.className = 'cbubble'; el.textContent = text; el.hidden = true; document.body.appendChild(el);
-  const b = { el, visible: false, anchors: [], tails: [], side }; bubbles.push(b); return b;
+  const b = { el, visible: false, anchors: [], tails: [], side, once, secs, t0: -1 }; bubbles.push(b); return b;
 }
 function mouthAt(head, y = 1.575, z = 0.135) { const o = new THREE.Object3D(); o.position.set(0, y, z); head.add(o); return o; }
 const _bp = new THREE.Vector3();
 function updateBubbles() {
   for (const b of bubbles) {
     let show = b.visible && playing && !reading;
+    if (b.once) {                       // first time they get to talk: start the clock; after it runs out they stay quiet
+      const now = performance.now() / 1000;
+      if (show && b.t0 < 0) b.t0 = now;
+      show = show && b.t0 >= 0 && now - b.t0 < b.secs;
+      if (b.t0 >= 0 && now - b.t0 >= b.secs) show = false;
+    }
     const pts = [];
     if (show) for (const a of b.anchors) {
       a.getWorldPosition(_bp); const d = _bp.distanceTo(camera.position); _bp.project(camera);

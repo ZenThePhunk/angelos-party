@@ -171,7 +171,7 @@ export function makeSunny(ctx) {
 
   // petting: walk up and click/tap him → he flops down and rolls belly-up for rubs
   let belly = 0;           // 0..1 roll onto his back
-  const rubBubble = ctx.speechBubble('♡ Belly rubs! ♡'); rubBubble.anchors = [mouth];
+  const rubBubble = ctx.speechBubble('♡ Belly rubs! ♡', { once: false });   // shows every time you pet him rubBubble.anchors = [mouth];
   const pet = () => { if (st.state === 'belly') { st.timer = Math.max(st.timer, 4); return; } st.state = 'belly'; st.timer = 7; st.tgtAng = st.ang; };
   W.readables.push({ obj: dog, name: 'Sunny', open: 'pet', pet });
   const pick = () => {     // what to do next: mostly pace a little or stand, sometimes sit or lie down
