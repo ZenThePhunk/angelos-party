@@ -347,7 +347,7 @@ const GALLERIES = {
 };
 async function openBooth(key = 'booth') {
   const G = GALLERIES[key];
-  reading = true; $('#booth').hidden = false; $('#booth .ttl').textContent = G.title;
+  reading = true; $('#booth').hidden = false; $('#booth .ttl').textContent = G.title; $('#booth').dataset.g = key;   // the photo booth shows whole strips, Tyler's shows squares
   if (document.pointerLockElement) { suppressPause = true; document.exitPointerLock(); }
   for (const k in keys) keys[k] = false;
   if (galleryKey !== key) {

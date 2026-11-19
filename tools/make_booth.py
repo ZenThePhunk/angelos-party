@@ -23,7 +23,7 @@ def main(src):
         name = f"{n:04d}.jpg"
         with Image.open(p) as im:
             im = ImageOps.exif_transpose(im).convert("RGB")
-            for folder, longest, q in (("full", 2000, 85), ("thumb", 480, 78)):
+            for folder, longest, q in (("full", 2000, 92), ("thumb", 640, 80)):
                 c = im.copy(); c.thumbnail((longest, longest), Image.LANCZOS)
                 c.save(OUT / folder / name, "JPEG", quality=q, optimize=True, progressive=True)
         out.append({"thumb": f"photos/booth/thumb/{name}", "full": f"photos/booth/full/{name}"})
