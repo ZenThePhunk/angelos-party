@@ -34,7 +34,7 @@ export function placeTattooArtists({ scene, W, FT, labelSprite }) {
     top: '#0d0d0f', sleeves: 'mesh', bareShoulder: 'L', pants: '#0d0d0f', shoes: '#111' });   // fitted black square-neck midi dress, sheer mesh sleeves (left one slipped off the shoulder for the tattoo)
   lori.root.position.set(f(29.6), 0, f(4.2)); lori.root.rotation.y = -0.3;   // facing the room, back-left shoulder toward Isa
   scene.add(lori.root);
-  sit(lori, 0.48); tag(lori, 'Lori', 1.95);
+  sit(lori, 0.48);
   { const skinM = toon('#f1cdb4');   // square neckline
     // square neckline: a skin panel following the curve of the chest
     const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.152, 0.13, 0.07, 16, 1, true, -0.55, 1.1), skinM); nk.position.set(0, 1.41, 0); nk.scale.z = 0.74; lori.P.upper.add(nk);
@@ -54,7 +54,7 @@ export function placeTattooArtists({ scene, W, FT, labelSprite }) {
   // ── Alaine: blonde, black jacket, red skirt slit to bare her right leg, stretched out onto the stool ──
   const alaine = buildPerson({ build: 'f', height: 1.68, skin: '#f2cfb3', hair: '#d9b56a', hairStyle: 'long', bangs: false, blush: true, top: '#121212', openJacket: true, shirt: '#c8141c', shirtPlain: true, pants: '#c8141c', bareLeg: 'R', shoes: '#151515' });
   alaine.root.position.set(f(40), 0, f(4.2)); alaine.root.rotation.y = -Math.PI / 2; scene.add(alaine.root);
-  sit(alaine, 0.48); tag(alaine, 'Alane', 1.95);
+  sit(alaine, 0.48);
   // a long red skirt draped over the lap and down the left side
   const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.26, 0.45, 20, 1, true), new THREE.MeshToonMaterial({ color: '#c8141c', side: THREE.DoubleSide }));
   skirt.position.set(0.09, 0.66, 0.2); skirt.rotation.x = -1.2; skirt.scale.z = 0.7; alaine.P.body.add(skirt);

@@ -271,10 +271,11 @@ $('#music .hide').onclick = () => { $('#music').classList.add('min'); if (ytRead
 $('#music .show').onclick = () => { $('#music').classList.remove('min'); startMusic(); };
 
 // ── reading the cards (menus + thank-you) up close ──
-const readRay = new THREE.Raycaster(); readRay.far = 2.2;   // walk up close (about 7 ft) to use something
+const _me = new THREE.Vector3(), readRay = new THREE.Raycaster(); readRay.far = 3.2;   // walk up close (about 7 ft) to use something; big things like the pool table reach a little further
 function readableAt(nx, ny) {
-  readRay.setFromCamera({ x: nx, y: ny }, camera);
-  for (const r of W.readables) if (readRay.intersectObject(r.obj, true).length) return r;
+  readRay.setFromCamera({ x: nx, y: ny }, camera); readRay.far = view === 'first' ? 3.2 : 7;
+  _me.set(player.x, camera.position.y, player.z); if (view !== 'first') _me.y = me ? me.eye : 1.6;
+  for (const r of W.readables) { const h = readRay.intersectObject(r.obj, true); if (h.length && h[0].point.distanceTo(_me) <= (r.reach || 2.2) + (view === 'first' ? 0 : 0.3)) return r; }   // measured from you, not the camera, so it works in both views
   return null;
 }
 let reading = false, tapTarget = null;
@@ -298,10 +299,11 @@ async function openArcade(r) {
   if (ytReady && musicOn) yt.setVolume(30);                       // turn the party down a bit while you play
   const cv = $('#arcade canvas');
   try {
-    if (r.game === 'maze') { const m = await import('./games/maze.js'); arcadeGame = m.startMaze(cv, { onExit: closeArcade }); }
+    if (r.game === 'pool') { const m = await import('./games/pool.js'); arcadeGame = m.startPool(cv, { onExit: closeArcade }); }
+    else if (r.game === 'maze') { const m = await import('./games/maze.js'); arcadeGame = m.startMaze(cv, { onExit: closeArcade }); }
     else { const m = await import('./games/fighter.js'); arcadeGame = m.startFighter(cv, { variant: r.game === 'brawl' ? 'fistfury' : 'bloodduel', onExit: closeArcade }); }
   } catch (e) { console.error(e); const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); g.fillStyle = '#fff'; g.font = '20px monospace'; g.fillText('Out of order — check back soon!', 140, 240); }
-  $('#arcade .ctl').textContent = r.game === 'maze' ? 'Arrows / WASD to move · Enter to start · Esc to leave' : 'Arrows / WASD move & jump · J punch · K kick · Enter to start · Esc to leave';
+  $('#arcade .ctl').textContent = r.game === 'pool' ? (isTouch ? 'Drag on the table to aim · pull the power bar down and let go to shoot' : 'Drag on the table to aim (← → to fine-tune) · pull the power bar down or hold Space, let go to shoot · Esc to leave') : r.game === 'maze' ? 'Arrows / WASD to move · Enter to start · Esc to leave' : 'Arrows / WASD move & jump · J punch · K kick · Enter to start · Esc to leave';
 }
 function closeArcade() {
   if (arcadeGame) { arcadeGame.stop(); arcadeGame = null; }

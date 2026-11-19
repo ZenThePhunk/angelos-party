@@ -163,7 +163,7 @@ export function makeSunny(ctx) {
 
   // ── where he hangs out: around Austin & Bre ──
   const C = new THREE.Vector3(VENUE.spouseSpot.x * FT, 0, VENUE.spouseSpot.z * FT);
-  const st = { x: C.x + 0.85, z: C.z + 0.15, yaw: Math.PI / 2, state: 'stand', timer: 3, ang: 0.15, tgtAng: 0, phase: 0, speed: 0, pose: 0, poseTo: 0 };
+  const st = { x: C.x + 0.95, z: C.z, yaw: Math.PI / 2, state: 'sit', timer: 14, ang: 0,   /* starts sitting in front of Austin & Bre, facing the door you come in */ tgtAng: 0, phase: 0, speed: 0, pose: 1, poseTo: 1 };
   // pose blend: 0 = standing, 1 = sitting, 2 = lying down
   dog.position.set(st.x, 0, st.z); scene.add(dog); dog.userData.sunny = st;   // st exposed for testing poses
   const col = { circle: [st.x, st.z], r: 0.33 }; W.colliders.push(col);
@@ -176,7 +176,7 @@ export function makeSunny(ctx) {
   W.readables.push({ obj: dog, name: 'Sunny', open: 'pet', pet });
   const pick = () => {     // what to do next: mostly pace a little or stand, sometimes sit or lie down
     const r = Math.random();
-    if (r < 0.4) { st.state = 'pace'; st.tgtAng = st.ang + (Math.random() < 0.5 ? -1 : 1) * (0.9 + Math.random() * 1.6); }
+    if (r < 0.4) { st.state = 'pace'; st.tgtAng = Math.max(-1.15, Math.min(1.15, st.ang + (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 1.0))); if (Math.abs(st.tgtAng - st.ang) < 0.2) st.tgtAng = -st.ang * 0.8; }   // stays on the front side (toward the door), where you can see him
     else if (r < 0.62) { st.state = 'stand'; st.timer = 3 + Math.random() * 3; }
     else if (r < 0.85) { st.state = 'sit'; st.timer = 6 + Math.random() * 5; }
     else { st.state = 'lie'; st.timer = 8 + Math.random() * 6; }

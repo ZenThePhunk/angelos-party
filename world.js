@@ -604,7 +604,8 @@ export function buildWorld(scene, Q) {
     g.add(M(new THREE.SphereGeometry(0.029, 16, 12), std({ color: '#f6f2e8', roughness: 0.15 }), -0.6, H, 0.12));
     for (const s of [-1, 1]) { const cue = M(new THREE.CylinderGeometry(0.007, 0.014, 1.45, 10), std({ color: '#c8a070', roughness: 0.5 }), -0.1, H + 0.03, s * 0.3); cue.rotation.z = Math.PI / 2; cue.rotation.y = s * 0.12; g.add(cue); }
     const warm = new THREE.PointLight('#ffc48a', 5, 6, 1.6); warm.position.set(f(V.poolTable.x), 2.4, f(V.poolTable.z)); add(warm);
-    add(g); box(f(V.poolTable.x) - W / 2, f(V.poolTable.z) - Dd / 2, f(V.poolTable.x) + W / 2, f(V.poolTable.z) + Dd / 2);
+    readables.push({ obj: g, name: '8-Ball Pool', open: 'game', game: 'pool', reach: 3.2 });   // click the table to play a game against the computer
+    add(g); dynamic.add(g);   // kept as its own object (not merged) so clicks can find it from every side box(f(V.poolTable.x) - W / 2, f(V.poolTable.z) - Dd / 2, f(V.poolTable.x) + W / 2, f(V.poolTable.z) + Dd / 2);
   }
 
   // ── concrete food table with red glow underneath ──
@@ -702,7 +703,7 @@ export function buildWorld(scene, Q) {
         const flashCanvas = document.createElement('canvas'); flashCanvas.width = 1688; flashCanvas.height = 1256;
         const realFlash = new THREE.CanvasTexture(flashCanvas); realFlash.colorSpace = THREE.SRGBColorSpace;
         const flashPlane = M(new THREE.PlaneGeometry(0.38, 0.283), menuPaper(flashTex), 0, 0.19, 0.016); fr.add(flashPlane);
-        const fim = new Image(); fim.onload = () => { flashCanvas.getContext('2d').drawImage(fim, 0, 0, 1688, 1256); realFlash.needsUpdate = true; flashPlane.material = menuPaper(realFlash); flashRead.canvas = flashCanvas; }; fim.src = 'images/flash.png';
+        const fim = new Image(); fim.onload = () => { flashCanvas.getContext('2d').drawImage(fim, 0, 0, 1688, 1256); realFlash.needsUpdate = true; flashPlane.material = menuPaper(realFlash); flashRead.canvas = flashCanvas; }; fim.src = 'images/flash.jpg';
         add(fr);
         const flashRead = { obj: fr, canvas: flashTex.image, name: 'Tattoo flash' }; readables.push(flashRead);
         dynamic.add(fr);   // keep it separate so the real sheet can swap in once it loads

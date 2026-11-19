@@ -194,8 +194,8 @@ export function discoSpecks() {
   });
 }
 export async function goboLogo() {
-  // If the real logo file is in the project (images/gobo.png, white on black), project that; otherwise draw a close match.
-  const img = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'images/gobo.png'; });
+  // If the real logo file is in the project (images/gobo.jpg, white on black), project that; otherwise draw a close match.
+  const img = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'images/gobo.jpg'; });
   try { await document.fonts.load('200px "Great Vibes"'); } catch { /* any script font */ }
   return paint(1024, 800, (g, w, h) => {
     g.fillStyle = '#000'; g.fillRect(0, 0, w, h);

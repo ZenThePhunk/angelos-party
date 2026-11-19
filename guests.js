@@ -78,6 +78,7 @@ function makeCardTrick(ctx) {
   place(mi, mx, mz); place(ky, kx, kz); ky.root.scale.setScalar(1.88 / 1.8);
   for (const [n, x, z, g] of [['Franklin the Magician', Cx - D, Cz, fr], ['Michael', mx, mz, mi], ['Kyp', kx, kz, ky]]) {
     W.colliders.push({ circle: [x, z], r: 0.32 });
+    if (n === 'Michael' || n === 'Kyp') continue;   // no name tags for Michael and Kyp
     const tag = ctx.labelSprite(n, { size: 70, w: n.length > 12 ? 860 : 512 }); if (tag) { tag.position.set(x, n === 'Kyp' ? 2.48 : 2.2, z); scene.add(tag); }   // Kyp's tag sits higher so it doesn't overlap Michael's
   }
 
@@ -275,12 +276,90 @@ function makeEmilio(ctx) {
 }
 
 
+// ── Ashleigh: long dark hair, no bangs, navy knit sweater thrown over her shoulders, strapless paisley bustier, wide black pants, scattered arm tattoos. Setting out and straightening the food. ──
+function makeAshleigh(ctx) {
+  const { scene, W, FT } = ctx;
+  const skin = '#ecc3a3';
+  const p = buildPerson({ build: 'f', height: 1.65, skin, hair: '#2a1d17', hairStyle: 'long', bangs: false, blush: true,
+    top: skin, sleeves: 'none', armTattoos: 'sparse', pants: '#0d0c0e', pantsStyle: 'wide', shoes: '#0c0c0c' });
+  const P = p.P;
+  // strapless paisley bustier
+  const paisley = paint(256, 256, (g, w, h) => {
+    g.fillStyle = '#263547'; g.fillRect(0, 0, w, h);
+    let seed = 3; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    for (let i = 0; i < 22; i++) {
+      const x = r() * w, y = r() * h, k = 9 + r() * 12, a = r() * 6.3;
+      g.save(); g.translate(x, y); g.rotate(a);
+      g.fillStyle = ['#7a5236', '#a5814f', '#3f5e6b', '#5b3a2a'][i % 4];
+      g.beginPath(); g.moveTo(0, -k * 1.4); g.bezierCurveTo(k, -k * 0.6, k, k, 0, k); g.bezierCurveTo(-k, k, -k * 0.9, -k * 0.2, 0, -k * 1.4); g.fill();   // paisley teardrop
+      g.strokeStyle = '#d8c08a'; g.lineWidth = 1.5; g.beginPath(); g.arc(0, k * 0.15, k * 0.45, 0, 6.3); g.stroke();
+      g.restore();
+    }
+    g.fillStyle = 'rgba(230,214,170,.7)'; for (let i = 0; i < 140; i++) g.fillRect(r() * w, r() * h, 2, 2);   // little gold flecks
+  }, { repeat: true });
+  paisley.repeat.set(3, 1);
+  const bodicePts = [[0.157, 0.93], [0.161, 0.98], [0.132, 1.08], [0.147, 1.2], [0.166, 1.3], [0.162, 1.345], [0.14, 1.35]];
+  const bodice = mesh(lathe(bodicePts), new THREE.MeshToonMaterial({ map: paisley, side: THREE.DoubleSide })); bodice.scale.z = 0.73; P.upper.add(bodice);
+  // navy ribbed sweater thrown over the shoulders, sleeves hanging down the front
+  const knit = paint(128, 128, (g, w, h) => { g.fillStyle = '#1f2550'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(10,12,35,.55)'; for (let x = 0; x < w; x += 8) g.fillRect(x, 0, 3, h); }, { repeat: true });
+  knit.repeat.set(6, 1);
+  const kn = new THREE.MeshToonMaterial({ map: knit, side: THREE.DoubleSide });
+  const roll = mesh(new THREE.TorusGeometry(0.165, 0.042, 10, 32), kn, 0, 1.43, -0.01); roll.rotation.x = Math.PI / 2; roll.scale.y = 0.78; P.upper.add(roll);   // bunched around the shoulders
+  const back = mesh(lathe([[0.2, 1.44], [0.215, 1.36], [0.205, 1.24], [0.19, 1.16]], 24, Math.PI - 1.5, 3.0), kn); back.scale.z = 0.8; P.upper.add(back);   // body of the sweater hanging down her back
+  for (const sd of [1, -1]) {             // the two sleeves draped down over the chest
+    const a = new THREE.Vector3(0.12 * sd, 1.43, 0.08), b = new THREE.Vector3(0.05 * sd, 1.17, 0.14);
+    const sl = mesh(new THREE.CylinderGeometry(0.034, 0.03, a.distanceTo(b), 12), kn); sl.position.copy(a).add(b).multiplyScalar(0.5);
+    sl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), a.clone().sub(b).normalize()); P.upper.add(sl);
+    const cuff = mesh(new THREE.CylinderGeometry(0.031, 0.031, 0.04, 12), toon('#181d42'), b.x, b.y - 0.01, b.z); cuff.quaternion.copy(sl.quaternion); P.upper.add(cuff);
+  }
+  // black watch on the left wrist, little silver hoops
+  const wb = mesh(new THREE.TorusGeometry(0.037, 0.008, 6, 16), toon('#111'), 0, -0.25, 0); wb.rotation.x = Math.PI / 2; P.elbowL.add(wb);
+  const sv = silverMat();
+  for (const sd of [1, -1]) { const h = mesh(new THREE.TorusGeometry(0.012, 0.0025, 5, 12), sv, 0.106 * sd, 1.635 - 0.045, 0.005); h.rotation.y = Math.PI / 2; p.head.add(h); }
+  // working along the far side of the food table: straightening trays, setting things out
+  const stations = [[60.9, 32.6], [60.9, 35.0], [60.9, 37.3]].map(([x, z]) => ({ at: [x * FT, z * FT], yaw: -Math.PI / 2 }));
+  const st = { x: stations[1].at[0], z: stations[1].at[1], yaw: -Math.PI / 2, i: 1, mode: 'work', timer: 5, speed: 0, far: 0 };
+  p.root.position.set(st.x, 0, st.z); p.root.rotation.y = st.yaw; scene.add(p.root);
+  const col = { circle: [st.x, st.z], r: 0.32 }; W.colliders.push(col);
+  const tag = ctx.labelSprite('Ashleigh', { size: 70 }); if (tag) { tag.position.set(0, 2.02 * 1.8 / 1.65, 0); p.root.add(tag); }
+  const hi = ctx.speechBubble ? ctx.speechBubble('Grab a Plate!', { side: 'left' }) : null;   // says it once, the first time you come up to the table
+  if (hi) { const m = new THREE.Object3D(); m.position.set(0, 1.575, 0.135); p.head.add(m); hi.anchors = [m]; }
+  const anim = animator(p), tgt = new THREE.Vector3(), poleR = new THREE.Vector3(-1, -0.5, -0.4), poleL = new THREE.Vector3(1, -0.5, -0.4);
+  const turn = (want, k) => { st.yaw += Math.atan2(Math.sin(want - st.yaw), Math.cos(want - st.yaw)) * Math.min(1, k); };
+  return { update(dt, t) {
+    const P0 = ctx.player;
+    if (hi) hi.visible = !!P0 && Math.hypot(P0.x - st.x, P0.z - st.z) < 3.2;
+    if (st.mode === 'walk') {
+      const [tx, tz] = stations[st.i].at, dx = tx - st.x, dz = tz - st.z, d = Math.hypot(dx, dz);
+      if (d < 0.06) { st.mode = 'work'; st.timer = 5 + Math.random() * 5; st.speed = 0; st.far = Math.random() < 0.5 ? 1 : 0; }
+      else { turn(Math.atan2(dx, dz), dt * 5); const step = Math.min(d, 0.7 * dt); st.x += dx / d * step; st.z += dz / d * step; st.speed = step / Math.max(dt, 1e-4); }
+    } else {
+      st.speed = 0; turn(stations[st.i].yaw, dt * 4); st.timer -= dt;
+      if (st.timer <= 0) { st.i = (st.i + (Math.random() < 0.5 ? 1 : 2)) % stations.length; st.mode = 'walk'; }
+    }
+    p.root.position.set(st.x, 0, st.z); p.root.rotation.y = st.yaw; col.circle[0] = st.x; col.circle[1] = st.z;
+    anim(dt, st.speed, t, 'idle');
+    if (st.mode === 'work') {                 // both hands on the food: nudging trays into line, reaching across to set something down
+      const k = p.root.scale.y || 1;
+      p.root.updateWorldMatrix(true, true);
+      const reachOut = st.far ? 0.5 + 0.08 * Math.max(0, Math.sin(t * 0.9)) : 0.4;
+      const fx = Math.sin(t * 1.5) * 0.08, fy = Math.max(0, Math.sin(t * 2.1)) * 0.05;
+      tgt.set(-0.13 + fx, (0.84 + fy) / k, reachOut / k); p.root.localToWorld(tgt); reach(P.armR, P.elbowR, tgt, poleR);
+      tgt.set(0.13 + fx * 0.5, (0.84 + 0.05 - fy) / k, (reachOut - 0.04) / k); p.root.localToWorld(tgt); reach(P.armL, P.elbowL, tgt, poleL);
+      P.sway.rotation.x = st.far ? 0.36 : 0.24;   // leaning over the table
+      P.neck.rotation.x = 0.32;
+    } else { P.sway.rotation.x = 0; P.neck.rotation.x = 0; }
+  } };
+}
+
+
 export function placeGuests(ctx) {
   const { scene, W, FT } = ctx;
   const people = [];
   people.push(...makeCardTrick(ctx));
   people.push(makeJoyce(ctx));
   people.push(makeEmilio(ctx));
+  people.push(makeAshleigh(ctx));
   people.push(makeSunny(ctx));
 
   return (dt, t) => { for (const p of people) p.update(dt, t); };

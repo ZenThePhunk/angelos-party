@@ -39,12 +39,13 @@ export function tattooSkin(skinHex) {
 
 // full tattoo sleeves: roses, daggers, swallows, hearts packed together in black linework
 const inkCache = new Map();
-function sleeveInk(skinHex) {
-  if (inkCache.has(skinHex)) return inkCache.get(skinHex);
+function sleeveInk(skinHex, sparse = false) {
+  const key = skinHex + (sparse ? ':sparse' : '');
+  if (inkCache.has(key)) return inkCache.get(key);
   const t = paint(256, 256, (g, w, h) => {
     g.fillStyle = skinHex; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(25,25,35,.9)'; g.fillStyle = 'rgba(25,25,35,.75)'; g.lineWidth = 2.5;
     let seed = 7; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < (sparse ? 11 : 26); i++) {   // sparse: scattered traditional pieces with skin between them
       const x = r() * w, y = r() * h, k = 8 + r() * 14, type = i % 5;
       g.beginPath();
       if (type === 0) { for (let a = 0; a < 3; a++) { g.moveTo(x + k, y); g.arc(x, y, k * (1 - a * 0.3), 0, 6.3); } }                          // rose
@@ -54,9 +55,9 @@ function sleeveInk(skinHex) {
       else { g.arc(x, y, k * 0.9, 0, 6.3); g.moveTo(x - k * 0.4, y - k * 0.1); g.arc(x - k * 0.35, y - k * 0.15, k * 0.15, 0, 6.3); g.moveTo(x + k * 0.5, y - k * 0.1); g.arc(x + k * 0.35, y - k * 0.15, k * 0.15, 0, 6.3); }   // skull-ish face
       g.stroke(); if (r() < 0.35) g.fill();
     }
-    g.lineWidth = 1.2; for (let i = 0; i < 60; i++) { const x = r() * w, y = r() * h; g.beginPath(); g.moveTo(x, y); g.lineTo(x + r() * 10 - 5, y + r() * 10 - 5); g.stroke(); }   // filler marks
+    g.lineWidth = 1.2; for (let i = 0; i < (sparse ? 0 : 60); i++) { const x = r() * w, y = r() * h; g.beginPath(); g.moveTo(x, y); g.lineTo(x + r() * 10 - 5, y + r() * 10 - 5); g.stroke(); }   // filler marks
   }, { repeat: true });
-  t.repeat.set(1, 1.4); inkCache.set(skinHex, t); return t;
+  t.repeat.set(1, 1.4); inkCache.set(key, t); return t;
 }
 // small leopard print for clothes
 let leoTex = null;
@@ -108,7 +109,7 @@ export function buildPerson(s) {
   const skin = toon(s.skin), hairM = toon(s.hair), shoe = toon(s.shoes || '#141210');
   const top = s.fur ? furMat() : s.topMap ? new THREE.MeshToonMaterial({ map: s.topMap, gradientMap }) : toon(s.top);
   const pants = s.cagePants ? cageMat(s.skin) : s.pantsMap ? new THREE.MeshToonMaterial({ map: s.pantsMap, gradientMap }) : toon(s.pants);
-  const armSkin = s.armTattoos ? new THREE.MeshToonMaterial({ gradientMap, map: sleeveInk(s.skin) }) : skin;
+  const armSkin = s.armTattoos ? new THREE.MeshToonMaterial({ gradientMap, map: sleeveInk(s.skin, s.armTattoos === 'sparse') }) : skin;
   const fem = s.build === 'f';
 
   // legs: thigh + knee joint + shin, so people can sit
@@ -408,7 +409,7 @@ export function buildPerson(s) {
       const x = gp.getX(i), y = gp.getY(i), z = gp.getZ(i);
       let X = x * 0.158, Y = y * 0.152 + 0.03, Z = z * 0.163 - 0.012;
       if (y < 0) {
-        const len = 0.16 + 0.28 * Math.min(1, Math.max(0, 0.6 - z));            // longer at the back and sides
+        const len = s.hairLen || (0.16 + 0.28 * Math.min(1, Math.max(0, 0.6 - z)));   // longer at the back and sides (hairLen = an even bob)
         Y = 0.03 + y * len;
         const fl = -y;                                                          // falls outward a little as it gets longer
         X *= 1 + 0.12 * fl; Z = Z * (1 + 0.05 * fl) - 0.04 * fl * Math.max(0, -z);
@@ -438,7 +439,7 @@ export function buildPerson(s) {
   } else if (hs === 'cap') {          // ball cap with a leather patch, short hair showing at the sides and back
     const cm = toon(s.capColor || '#4a4d55');
     const crown = M(new THREE.SphereGeometry(0.147, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.5), cm, 0, HY + 0.035, -0.008); crown.scale.set(1.02, 0.95, 1.06); head.add(crown);
-    const brim = M(new THREE.CylinderGeometry(0.11, 0.115, 0.01, 24, 1, false, -Math.PI / 2, Math.PI), cm, 0, HY + 0.045, 0.1); brim.rotation.x = 0.12; head.add(brim);
+    const brim = M(new THREE.CylinderGeometry(0.11, 0.115, 0.01, 24, 1, false, -Math.PI / 2, Math.PI), cm, 0, HY + 0.045, 0.1); brim.rotation.x = 0.12; brim.scale.z = 1.25; head.add(brim);   // brim reaches 25% further forward
     head.add(M(new THREE.BoxGeometry(0.045, 0.03, 0.006), toon('#7a4a26'), 0, HY + 0.1, 0.143).rotateX(-0.45));
     head.add(M(new THREE.SphereGeometry(0.011, 8, 6), cm, 0, HY + 0.178, -0.008));
     const back = M(new THREE.SphereGeometry(0.139, 24, 12, Math.PI * 1.05, Math.PI * 0.9, Math.PI * 0.42, Math.PI * 0.2), hairM, 0, HY, -0.004); back.scale.set(1, 1.1, 1.03); head.add(back);
@@ -619,13 +620,73 @@ function keyboard() {
   for (let i = 0; i < 26; i++) if (i % 7 !== 2 && i % 7 !== 6) g.add(M(new THREE.BoxGeometry(0.018, 0.02, 0.08), new THREE.MeshStandardMaterial({ color: '#111' }), -0.47 + i * 0.0375 + 0.019, 0.91, 0.03));
   return g;
 }
+// a tube whose radius changes along its length (sax body, neck, bow)
+function taperTube(pts, r0, r1, mat, seg = 48, rad = 18, ease = (t) => t) {
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal'), fr = curve.computeFrenetFrames(seg, false);
+  const pos = [], idx = [], p = new THREE.Vector3();
+  for (let i = 0; i <= seg; i++) {
+    const t = i / seg, r = r0 + (r1 - r0) * ease(t); curve.getPointAt(t, p);
+    for (let j = 0; j <= rad; j++) {
+      const a = (j / rad) * Math.PI * 2, n = fr.normals[i], b = fr.binormals[i];
+      pos.push(p.x + (n.x * Math.cos(a) + b.x * Math.sin(a)) * r, p.y + (n.y * Math.cos(a) + b.y * Math.sin(a)) * r, p.z + (n.z * Math.cos(a) + b.z * Math.sin(a)) * r);
+    }
+  }
+  for (let i = 0; i < seg; i++) for (let j = 0; j < rad; j++) { const k = i * (rad + 1) + j; idx.push(k, k + rad + 1, k + 1, k + 1, k + rad + 1, k + rad + 2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.userData.curve = curve; return m;
+}
+// Tenor sax, built in the player's torso space at real size: mouthpiece at his lips, neck curving forward and down,
+// body running down in front of him toward his right hip, the bow, and the bell turning up and out. Lacquered brass with pearl key touches.
 function sax() {
   const g = new THREE.Group();
-  const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.36, 0.02), new THREE.Vector3(0, 0.2, 0.05), new THREE.Vector3(0, 0, 0.06), new THREE.Vector3(0.02, -0.18, 0.08), new THREE.Vector3(0.06, -0.26, 0.12), new THREE.Vector3(0.09, -0.18, 0.15)]);
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.025, 10), gold()));
-  const bell = M(new THREE.CylinderGeometry(0.07, 0.03, 0.12, 18, 1, true), gold(), 0.1, -0.12, 0.16); bell.material.side = THREE.DoubleSide; g.add(bell);
-  const neck = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.36, 0.02), new THREE.Vector3(0, 0.44, -0.02), new THREE.Vector3(0, 0.46, -0.08)]);
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(neck, 10, 0.012, 8), gold()));
+  const brass = new THREE.MeshStandardMaterial({ color: '#e2b95c', metalness: 0.78, roughness: 0.24, emissive: '#3a2408', emissiveIntensity: 0.35 });
+  const brassD = brass.clone(); brassD.side = THREE.DoubleSide;
+  const pearl = new THREE.MeshStandardMaterial({ color: '#f3ecdc', roughness: 0.25, metalness: 0.1 });
+  const black = new THREE.MeshStandardMaterial({ color: '#0c0c0c', roughness: 0.3 });
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // mouthpiece (black) + silver ligature
+  const mpA = V(0, 1.567, 0.13), mpB = V(0, 1.53, 0.205);
+  const mp = taperTube([mpA, mpA.clone().lerp(mpB, 0.5), mpB], 0.007, 0.0115, black, 8, 12); g.add(mp);
+  const lig = M(new THREE.CylinderGeometry(0.0125, 0.0125, 0.012, 14, 1, true), new THREE.MeshStandardMaterial({ color: '#d8d8d8', metalness: 1, roughness: 0.2, side: THREE.DoubleSide }), 0, 0, 0);
+  lig.position.copy(mpA.clone().lerp(mpB, 0.62)); lig.quaternion.setFromUnitVectors(V(0, 1, 0), mpB.clone().sub(mpA).normalize()); g.add(lig);
+  // neck (crook): curves forward then down into the body
+  const neckPts = [V(0, 1.53, 0.2), V(-0.004, 1.5, 0.245), V(-0.016, 1.445, 0.262), V(-0.028, 1.39, 0.258)];
+  g.add(taperTube(neckPts, 0.0115, 0.016, brass, 20, 14));
+  g.add(M(new THREE.BoxGeometry(0.004, 0.004, 0.05), brass, 0.012, 1.485, 0.24).rotateX(0.7));   // octave key along the neck
+  // body: a cone getting wider toward the bottom
+  const bodyPts = [V(-0.028, 1.39, 0.258), V(-0.05, 1.22, 0.24), V(-0.078, 1.04, 0.222), V(-0.1, 0.89, 0.205)];
+  const body = taperTube(bodyPts, 0.016, 0.04, brass, 40, 18); g.add(body);
+  g.add(M(new THREE.CylinderGeometry(0.019, 0.019, 0.014, 16), brass, -0.028, 1.385, 0.258));   // neck joint collar
+  // bow: the U-bend at the bottom
+  const bowPts = [V(-0.1, 0.89, 0.205), V(-0.112, 0.815, 0.222), V(-0.116, 0.79, 0.27), V(-0.118, 0.82, 0.318), V(-0.122, 0.88, 0.33)];
+  g.add(taperTube(bowPts, 0.04, 0.046, brass, 30, 18));
+  // bell: rises up the front and flares open
+  const bellPts = [V(-0.122, 0.88, 0.33), V(-0.126, 0.95, 0.338), V(-0.13, 1.02, 0.345)];
+  g.add(taperTube(bellPts, 0.046, 0.058, brass, 12, 18));
+  const flare = M(new THREE.LatheGeometry([[0.056, 0], [0.06, 0.018], [0.066, 0.034], [0.076, 0.05], [0.086, 0.058], [0.09, 0.06]].map(([r, y]) => new THREE.Vector2(r, y)), 28), brassD);
+  flare.position.set(-0.13, 1.02, 0.345); flare.quaternion.setFromUnitVectors(V(0, 1, 0), V(-0.03, 1, 0.22).normalize()); g.add(flare);
+  const rim = M(new THREE.TorusGeometry(0.09, 0.0035, 6, 32), brass); rim.position.copy(flare.position).add(V(-0.03, 1, 0.22).normalize().multiplyScalar(0.06)); rim.quaternion.copy(flare.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), Math.PI / 2)); g.add(rim);
+  const throat = M(new THREE.CircleGeometry(0.056, 20), new THREE.MeshBasicMaterial({ color: '#120b04' })); throat.position.copy(flare.position); throat.quaternion.copy(flare.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), -Math.PI / 2)); g.add(throat);
+  // keys: pearl touches down the front, gold key cups on the side, a rod tying them together
+  const bc = body.userData.curve, pt = new THREE.Vector3(), tg = new THREE.Vector3();
+  const along = (t, side, out) => { bc.getPointAt(t, pt); bc.getTangentAt(t, tg); const r = 0.016 + 0.024 * t; return pt.clone().add(V(side * r, 0, 0)).add(V(0, 0, out * r)); };
+  for (const t of [0.14, 0.24, 0.34, 0.5, 0.6, 0.7]) {                       // finger keys with pearl touches (front of the body)
+    const at = along(t, 0, 1.05), cup = M(new THREE.CylinderGeometry(0.011, 0.011, 0.006, 16), brass); cup.position.copy(at); cup.rotation.x = Math.PI / 2; g.add(cup);
+    const pr = M(new THREE.CylinderGeometry(0.0075, 0.0075, 0.004, 14), pearl); pr.position.copy(at).add(V(0, 0, 0.005)); pr.rotation.x = Math.PI / 2; g.add(pr);
+  }
+  for (let i = 0; i < 9; i++) {                                               // big tone-hole cups on the right side
+    const t = 0.08 + i * 0.105, at = along(Math.min(0.97, t), -1.02, 0.15), r = 0.012 + 0.012 * t;
+    const cup = M(new THREE.CylinderGeometry(r, r, 0.007, 16), brass); cup.position.copy(at); cup.rotation.z = Math.PI / 2; g.add(cup);
+  }
+  const rodA = along(0.06, 0.75, 0.75), rodB = along(0.95, 0.75, 0.75);       // key rod
+  const rod = M(new THREE.CylinderGeometry(0.0025, 0.0025, rodA.distanceTo(rodB), 6), brass); rod.position.copy(rodA).lerp(rodB, 0.5); rod.quaternion.setFromUnitVectors(V(0, 1, 0), rodB.clone().sub(rodA).normalize()); g.add(rod);
+  const guard = taperTube([along(0.84, -0.4, 1.3), along(0.92, -0.6, 1.6), along(1, -0.4, 1.3)], 0.003, 0.003, brass, 8, 6); g.add(guard);   // low key guard
+  // neck strap: from the hook on the back of the body, up around the back of his neck
+  const hook = along(0.12, 0, -1.1);
+  const strapM = new THREE.MeshStandardMaterial({ color: '#141414', roughness: 0.8 });
+  for (const sd of [1, -1]) g.add(taperTube([hook, V(0.045 * sd, 1.36, 0.15), V(0.075 * sd, 1.46, 0.05), V(0.06 * sd, 1.5, -0.04), V(0, 1.51, -0.075)], 0.005, 0.007, strapM, 24, 6));
+  // where the hands go (torso space): left hand on the upper stack, right hand on the lower stack
+  g.userData.handL = along(0.32, 0.9, 0.9); g.userData.handR = along(0.74, -0.9, 0.9);
   return g;
 }
 function micStand(h = 1.5) {
@@ -691,11 +752,9 @@ export function makeBandMember(role) {
     // where each stick lands, in the kit's own space
     anchors.hits = { snare: new THREE.Vector3(0.05, 0.7, 0.13), hat: new THREE.Vector3(0.38, 0.87, 0.06), ride: new THREE.Vector3(-0.3, 1.1, 0.36), floor: new THREE.Vector3(-0.36, 0.64, 0.1) };
   } else if (role === 'sax') {
-    inst = sax(); inst.scale.setScalar(1.35); inst.rotation.x = -0.28;
-    const neckEnd = new THREE.Vector3(0, 0.46, -0.08).multiplyScalar(1.35).applyEuler(inst.rotation);
-    inst.position.set(0, 1.585, 0.15).sub(neckEnd);           // mouthpiece at the lips
-    P.upper.add(inst);
-    anchors.L = A(inst, 0.0, 0.16, 0.075); anchors.R = A(inst, 0.03, -0.1, 0.1);
+    inst = sax(); P.upper.add(inst);                              // built at real size in his torso space: mouthpiece at his lips, hanging straight down his front
+    const hl = inst.userData.handL, hr = inst.userData.handR;
+    anchors.L = A(inst, hl.x + 0.012, hl.y, hl.z + 0.02); anchors.R = A(inst, hr.x - 0.012, hr.y, hr.z + 0.02);
   }
   if (role === 'bass') {     // sitting on his bass amp
     const amp = new THREE.Group(); amp.position.set(0, 0, -0.08);
