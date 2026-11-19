@@ -62,6 +62,7 @@ const W = buildWorld(scene, Q);
 const player = { x: VENUE.spawn.x * FT, z: VENUE.spawn.z * FT, yaw: Math.atan2(-VENUE.spawn.facing[0], -VENUE.spawn.facing[1]), pitch: -0.02, speed: 0 };
 let me = null, spouse = null, bubble = null, view = 'first', playing = false;   // first person; your own body stays hidden
 
+const nameTags = [];   // every name tag: shown only when you're close to that person
 function labelSprite(text, { size = 64, w = 512, h = 128 } = {}) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
   g.fillStyle = 'rgba(255,246,236,.94)'; g.beginPath(); g.roundRect(6, 6, w - 12, h - 12, h / 2.4); g.fill();
@@ -70,7 +71,7 @@ function labelSprite(text, { size = 64, w = 512, h = 128 } = {}) {
   // dimmed just under the glow threshold so the text stays crisp, and on layer 1 so the floor doesn't reflect it
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, toneMapped: false, fog: false, color: new THREE.Color(0.68, 0.66, 0.64) }));
   s.layers.set(1);
-  s.scale.set(w / h * 0.16, 0.16, 1); return s;   // name tags and speech bubbles
+  s.scale.set(w / h * 0.16, 0.16, 1); nameTags.push(s); return s;   // name tags and speech bubbles
 }
 
 // comic-book speech bubbles: drawn on the page (not in 3D) so they stay crisp and readable,
@@ -578,6 +579,7 @@ function frame() {
   // walk up to something and look at it: glowing words pinned in front of it
   //   big flower pieces → "Flowers by Brophy Blooms"; Kristin → "Best Dressed"
   glowLabel(glowFlowers, dt); glowLabel(glowKristin, dt);
+  for (const tg of nameTags) { tg.getWorldPosition(_fp); const dx = _fp.x - camera.position.x, dz = _fp.z - camera.position.z; tg.visible = !playing || dx * dx + dz * dz < 4.2 * 4.2; }   // names only up close (about 14 ft)
   updateBubbles();
   if (!arcadeOpen) composer.render();
 

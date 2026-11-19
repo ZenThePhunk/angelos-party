@@ -167,7 +167,7 @@ export function makeSunny(ctx) {
   // pose blend: 0 = standing, 1 = sitting, 2 = lying down
   dog.position.set(st.x, 0, st.z); scene.add(dog); dog.userData.sunny = st;   // st exposed for testing poses
   const col = { circle: [st.x, st.z], r: 0.33 }; W.colliders.push(col);
-  const tag = ctx.labelSprite('Sunny', { size: 70 }); if (tag) { tag.position.set(0, 1.22, 0); dog.add(tag); }   // high enough to clear his head when he sits up
+  // (no name tag for Sunny: Austin took it out)
 
   // petting: walk up and click/tap him → he flops down and rolls belly-up for rubs
   let belly = 0;           // 0..1 roll onto his back
