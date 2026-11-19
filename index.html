@@ -7,7 +7,7 @@
 <meta name="description" content="Walk through Austin and Bre's wedding party.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Comic+Neue:wght@700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
 <style>
   :root { --cream: #fbefe2; --red: #d8242c; --amber: #ffad5a; --script: "Great Vibes", "Snell Roundhand", cursive; --serif: "Cormorant Garamond", Georgia, serif; }
   * { box-sizing: border-box; }
@@ -80,6 +80,10 @@
     text-shadow: 0 0 5px rgba(255,220,190,.9), 0 0 12px rgba(255,120,90,.85), 0 0 24px rgba(255,60,50,.7), 0 0 44px rgba(255,40,40,.5); }
   #brophy.on { opacity: 1; transform: translate(-50%, -50%) scale(var(--s)); animation: brophyGlow 2.4s ease-in-out infinite; }
   @keyframes brophyGlow { 50% { text-shadow: 0 0 6px rgba(255,230,200,1), 0 0 16px rgba(255,130,100,.95), 0 0 32px rgba(255,70,55,.8), 0 0 60px rgba(255,40,40,.6); } }
+  .cbubble { position: fixed; z-index: 6; pointer-events: none; max-width: 15em; padding: .55em .95em .5em; background: #fff; color: #111; border: 3px solid #111; border-radius: 1.4em;
+    font-family: 'Comic Neue', 'Comic Sans MS', sans-serif; font-weight: 700; line-height: 1.15; text-align: center; letter-spacing: .01em; box-shadow: 3px 4px 0 rgba(0,0,0,.35); }
+  #tails { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 5; pointer-events: none; overflow: visible; }
+  #tails polygon { fill: #fff; stroke: #111; stroke-width: 3; stroke-linejoin: round; }
   #readHint { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); background: rgba(20,6,6,.7); padding: 5px 14px; border-radius: 99px; font-size: 15px; }
   #keys { position: absolute; top: 14px; right: 16px; background: rgba(20,6,6,.62); border: 1px solid rgba(255,140,80,.3); border-radius: 12px; padding: 8px 14px; font-size: 14px; line-height: 1.55; text-align: right; }
   #keys b { color: var(--amber); font-weight: 600; margin-right: 4px; }
@@ -232,7 +236,7 @@
 </div>
 <div id="boothBig" hidden><img alt="Photo booth picture"><button class="prev" aria-label="Previous">‹</button><button class="next" aria-label="Next">›</button><div class="n"></div><button class="x" aria-label="Close">×</button></div>
 <div id="reader" hidden><img alt="Card"><button class="x" aria-label="Close">×</button></div>
-<div id="brophy" aria-hidden="true">Flowers by Brophy</div>
+<div id="brophy" aria-hidden="true">Flowers by Brophy Blooms</div>
 <div id="music" hidden>
   <div class="bar"><i>♪</i><span>Them Changes · Thundercat</span><button class="hide" title="Hide and pause">–</button><button class="show">Play the music</button></div>
   <div class="frame"><div id="yt"></div><div class="tap" hidden>Tap the video to start the music</div><button class="unmute" hidden>🔊 Tap for sound</button></div>

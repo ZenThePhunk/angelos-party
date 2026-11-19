@@ -73,6 +73,54 @@ function labelSprite(text, { size = 64, w = 512, h = 128 } = {}) {
   s.scale.set(w / h * 0.16, 0.16, 1); return s;   // name tags and speech bubbles
 }
 
+// comic-book speech bubbles: drawn on the page (not in 3D) so they stay crisp and readable,
+// sitting just up and to the side of the speaker's head with a tail running right to their mouth.
+// speechBubble(text) → { visible, anchors: [Object3D at each speaker's mouth] }  (two anchors = a shared line with two tails)
+const bubbles = [];
+const tailSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); tailSvg.id = 'tails'; document.body.appendChild(tailSvg);
+function speechBubble(text, { side = 'right' } = {}) {   // side: which side of the speaker's face the bubble sits on
+  const el = document.createElement('div'); el.className = 'cbubble'; el.textContent = text; el.hidden = true; document.body.appendChild(el);
+  const b = { el, visible: false, anchors: [], tails: [], side }; bubbles.push(b); return b;
+}
+function mouthAt(head, y = 1.575, z = 0.135) { const o = new THREE.Object3D(); o.position.set(0, y, z); head.add(o); return o; }
+const _bp = new THREE.Vector3();
+function updateBubbles() {
+  for (const b of bubbles) {
+    let show = b.visible && playing && !reading;
+    const pts = [];
+    if (show) for (const a of b.anchors) {
+      a.getWorldPosition(_bp); const d = _bp.distanceTo(camera.position); _bp.project(camera);
+      if (_bp.z > 1 || Math.abs(_bp.x) > 1.2 || Math.abs(_bp.y) > 1.2) continue;
+      pts.push({ x: (_bp.x + 1) / 2 * innerWidth, y: (1 - _bp.y) / 2 * innerHeight, d });
+    }
+    if (!pts.length) show = false;
+    b.el.hidden = !show;
+    while (b.tails.length < b.anchors.length) { const t = document.createElementNS('http://www.w3.org/2000/svg', 'polygon'); tailSvg.appendChild(t); b.tails.push(t); }
+    b.tails.forEach((t) => t.setAttribute('visibility', show ? 'visible' : 'hidden'));
+    if (!show) continue;
+    const d = Math.min(...pts.map((p) => p.d)), k = Math.max(0.62, Math.min(1.15, 2.2 / d));   // a little bigger as you get close
+    b.el.style.fontSize = (19 * k).toFixed(1) + 'px';
+    const w = b.el.offsetWidth, h = b.el.offsetHeight;
+    const mx = Math.max(...pts.map((p) => p.x)), my = Math.min(...pts.map((p) => p.y));
+    const cxm = pts.reduce((q, p) => q + p.x, 0) / pts.length;
+    const hr0 = 0.15 * innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * d);
+    const minX = Math.min(...pts.map((p) => p.x));
+    let left = pts.length > 1 ? cxm - w / 2 : b.side === 'left' ? minX - hr0 - 30 * k - w : mx + hr0 + 30 * k, top = my - h - 26 * k;   // one speaker: up and to the right of the mouth; two: centered between them
+    if (pts.length === 1 && b.side !== 'left' && left + w > innerWidth - 8) left = minX - hr0 - 30 * k - w;   // flip sides near the screen edge
+    if (pts.length === 1 && b.side === 'left' && left < 8) left = mx + hr0 + 30 * k;
+    left = Math.max(8, Math.min(innerWidth - w - 8, left)); top = Math.max(8, top);
+    b.el.style.left = left + 'px'; b.el.style.top = top + 'px';
+    pts.forEach((p, i) => {      // tail: a wedge from the bubble's lower edge to the mouth
+      const bx = Math.max(left + 22, Math.min(left + w - 22, p.x + (left > p.x ? 26 : -26) * k)), by = top + h - 4;
+      const half = 11 * k;
+      // the tip stops just beside their face (on the bubble's side), not over it
+      const hr = 0.15 * innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * p.d), side = bx >= p.x ? 1 : -1;
+      b.tails[i].setAttribute('points', `${bx - half},${by} ${bx + half},${by} ${p.x + side * hr},${p.y - hr * 0.35}`);
+    });
+    for (let i = pts.length; i < b.tails.length; i++) b.tails[i].setAttribute('visibility', 'hidden');
+  }
+}
+
 let spouseCollider = null, myKind = null;
 let brophyOn = false, brophyD = 1; const _fwd = new THREE.Vector3(), _fp = new THREE.Vector3();
 // Austin and Bre dance together on the dance floor; guests walk in as themselves (first person)
@@ -86,7 +134,7 @@ function placeCouple() {
     couple.push(c);
     W.colliders.push({ circle: [cx, cz + off], r: 0.32 });
   });
-  bubble = labelSprite('You made it! ♡', { size: 54, w: 560 }); bubble.position.set(cx, 2.55, cz); bubble.visible = false; scene.add(bubble);
+  bubble = speechBubble('You made it! ♡', { side: 'left' }); bubble.anchors = [mouthAt(couple[1].head)];   // Bre says it; the bubble sits off to the left of her face
 }
 placeCouple();
 { const tag = labelSprite('Danny', { size: 70 }); tag.position.set(0, 2.2, 0); W.bartenders[0].add(tag); }   // the bartender on the right
@@ -96,7 +144,7 @@ const guests = [];
   { const tag = labelSprite('Kristin', { size: 70 }); tag.position.set(0, 2.2, 0); g.root.add(tag); }
   g.home = { x: gx, z: gz, face: -Math.PI / 2 }; guests.push(g); W.colliders.push({ circle: [gx, gz], r: 0.32 }); }
 
-const guestTick = placeGuests({ scene, W, FT, VENUE, labelSprite });
+const guestTick = placeGuests({ scene, W, FT, VENUE, labelSprite, speechBubble, player, isPlaying: () => playing });
 const tattooTick = placeTattooArtists({ scene, W, FT, labelSprite });   // artists at work in the tattoo lounge (tattoo.js)
 
 // ── Tyler, the photographer, wandering the party with his flash camera ──
@@ -109,7 +157,7 @@ const tylerSpots = [[16, 6.5], [20.5, 8.6], [12.5, 10.2], [9.5, 7.6], [14.5, 4.6
 let tylerOnRoute = true;
 tyler.root.position.set(T.x, 0, T.z); scene.add(tyler.root);
 { const tag = labelSprite('Tyler', { size: 70 }); tag.position.set(0, 2.18, 0); tyler.root.add(tag); }
-const tylerBubble = labelSprite(`${isTouch ? 'Tap' : 'Click'} on me to view the photos I took at the party`, { size: 46, w: 1180 }); tylerBubble.position.set(0, 2.46, 0); tylerBubble.visible = false; tyler.root.add(tylerBubble);
+const tylerBubble = speechBubble('Check out my photos!'); tylerBubble.anchors = [mouthAt(tyler.head)];   // the click/tap hint under the crosshair tells you how
 const tylerCollider = { circle: [T.x, T.z], r: 0.3 }; W.colliders.push(tylerCollider);
 W.readables.push({ obj: tyler.root, name: 'Tyler', open: 'tyler' });
 // after you've looked through his photos, Tyler heads back out to keep shooting the party
@@ -150,7 +198,7 @@ function updateTyler(dt, t) {
     case 'snapYou': mode = 'shoot'; faceP(); T.timer += dt; if (!T.fired && T.timer > 0.8) { tyler.fire(); cameraFlash(); T.fired = true; } if (T.timer > 1.6) { T.state = 'hang'; T.greetedAt = t; } break;
     case 'hang': faceP(); if (toP > 5.5 || t - T.greetedAt > 8) { T.state = 'walk'; T.greetedAt = t; } break;   // chats for a few seconds, then gets back to shooting
   }
-  tylerBubble.visible = (T.state === 'hang' || (T.state === 'snapYou' && T.fired)) && toP < 5.5;
+  tylerBubble.visible = ((T.state === 'hang' || (T.state === 'snapYou' && T.fired)) && toP < 5.5) || toP < 2.8;   // also whenever you walk up to him
   tyler.root.position.set(T.x, 0, T.z); tyler.root.rotation.y = T.yaw; tylerCollider.circle[0] = T.x; tylerCollider.circle[1] = T.z;
   tyler.update(dt, T.speed, t, mode);
 }
@@ -209,6 +257,7 @@ function openCard(r) {
   if (r.open === 'booth') { openBooth('booth'); return; }
   if (r.open === 'tyler') { openBooth('tyler'); return; }
   if (r.open === 'game') { openArcade(r); return; }
+  if (r.open === 'pet') { r.pet(); return; }   // Sunny: belly rubs
   $('#reader img').src = r.img || r.canvas.toDataURL('image/jpeg', 0.92); $('#reader').hidden = false; reading = true;   // menus open as the original printed files
   if (document.pointerLockElement) { suppressPause = true; document.exitPointerLock(); }
   for (const k in keys) keys[k] = false;
@@ -373,7 +422,7 @@ canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   for (const t of e.changedTouches) {
     if (joy && t.identifier === joy.id) { let dx = t.clientX - joy.x0, dy = t.clientY - joy.y0; const d = Math.hypot(dx, dy); if (d > 55) { dx *= 55 / d; dy *= 55 / d; } joy.dx = dx; joy.dy = dy; knob.style.transform = `translate(${dx}px,${dy}px)`; }
-    else if (lookT && t.identifier === lookT.id) { look((t.clientX - lookT.x) * 4.2, (t.clientY - lookT.y) * 3.4); lookT.x = t.clientX; lookT.y = t.clientY; }
+    else if (lookT && t.identifier === lookT.id) { look((t.clientX - lookT.x) * 5.04, (t.clientY - lookT.y) * 4.08); lookT.x = t.clientX; lookT.y = t.clientY; }
   }
 }, { passive: false });
 const tEnd = (e) => { for (const t of e.changedTouches) { if (joy && t.identifier === joy.id) { joy = null; joyEl.hidden = true; $('#touchHelp').classList.remove('walking'); } if (lookT && t.identifier === lookT.id) { $('#touchHelp').classList.remove('looking'); if (Math.hypot(t.clientX - lookT.x0, t.clientY - lookT.y0) < 12 && performance.now() - lookT.t0 < 350) { const r = readableAt((t.clientX / innerWidth) * 2 - 1, -(t.clientY / innerHeight) * 2 + 1); if (r) openCard(r); } lookT = null; } } };
@@ -498,9 +547,9 @@ function frame() {
 
   if (playing && isTouch && !reading) {            // phones: show a tap button for whatever is in the middle of the view
     const r = readableAt(0, 0);
-    if (r !== tapTarget) { tapTarget = r; $('#tapBtn').hidden = !r; if (r) $('#tapBtn').textContent = r.open === 'game' ? `▶ Tap to play ${r.name}` : r.open === 'booth' ? '📸 Tap to see the photo booth pictures' : r.open === 'tyler' ? "📷 Tap to see Tyler's photos" : `Tap to read the ${r.name.toLowerCase()}`; }
+    if (r !== tapTarget) { tapTarget = r; $('#tapBtn').hidden = !r; if (r) $('#tapBtn').textContent = r.open === 'game' ? `▶ Tap to play ${r.name}` : r.open === 'booth' ? '📸 Tap to see the photo booth pictures' : r.open === 'tyler' ? "📷 Tap to see Tyler's photos" : r.open === 'pet' ? '🐾 Tap to pet Sunny' : `Tap to read the ${r.name.toLowerCase()}`; }
   } else if (tapTarget) { tapTarget = null; $('#tapBtn').hidden = true; }
-  if (playing && !isTouch && !reading) { const r = locked() ? readableAt(0, 0) : readableAt(mouseN.x, mouseN.y); $('#readHint').hidden = !r; if (r) $('#readHint').textContent = r.open === 'game' ? `Click to play ${r.name}` : r.open === 'booth' ? 'Click to see the photo booth pictures' : r.open === 'tyler' ? "Click to see Tyler's photos" : `Click to read the ${r.name.toLowerCase()}`; }
+  if (playing && !isTouch && !reading) { const r = locked() ? readableAt(0, 0) : readableAt(mouseN.x, mouseN.y); $('#readHint').hidden = !r; if (r) $('#readHint').textContent = r.open === 'game' ? `Click to play ${r.name}` : r.open === 'booth' ? 'Click to see the photo booth pictures' : r.open === 'tyler' ? "Click to see Tyler's photos" : r.open === 'pet' ? 'Click to pet Sunny' : `Click to read the ${r.name.toLowerCase()}`; }
   {   // walk up to a big flower piece and look at it: "Flowers by Brophy" glows in the middle of the screen
     let see = false;
     if (playing && !reading) {
@@ -518,6 +567,7 @@ function frame() {
     }
     if (!!see !== brophyOn) { brophyOn = !!see; $('#brophy').classList.toggle('on', brophyOn); }
   }
+  updateBubbles();
   if (!arcadeOpen) composer.render();
 
   // if the computer is struggling, drop the floor reflections
@@ -526,4 +576,4 @@ function frame() {
 }
 frame();
 document.body.classList.add('ready');
-window.__venue = { openCard, portrait, player, camera, scene, W, toggleView, renderer };
+window.__venue = { openCard, portrait, player, camera, scene, W, toggleView, renderer, T, tylerBubble };

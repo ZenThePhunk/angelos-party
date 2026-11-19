@@ -243,6 +243,27 @@ export function buildWorld(scene, Q) {
     gd.rotation.y = -Math.PI / 2; add(gd);
     for (const z of [gz1, gz2]) add(M(new THREE.BoxGeometry(0.12, gh, 0.12), steel, L - 0.06, gh / 2, z));
     add(M(new THREE.BoxGeometry(0.12, 0.14, gz2 - gz1 + 0.12), steel, L - 0.06, gh, (gz1 + gz2) / 2));
+    // two rolling coat racks along the wall past the front door, full of guests' coats
+    for (const zc of [f(31.6), f(35.6)]) {
+      const rx = L - 0.45, len = 1.1, steelR = std({ color: '#b9bcc2', metalness: 1, roughness: 0.3 });
+      for (const s2 of [-1, 1]) {
+        add(M(new THREE.CylinderGeometry(0.013, 0.013, 1.62, 8), steelR, rx, 0.86, zc + s2 * len / 2));
+        add(M(new THREE.BoxGeometry(0.42, 0.025, 0.03), steelR, rx, 0.07, zc + s2 * len / 2));
+        for (const s3 of [-1, 1]) add(M(new THREE.SphereGeometry(0.03, 8, 6), black, rx + s3 * 0.19, 0.03, zc + s2 * len / 2));
+      }
+      const bar = M(new THREE.CylinderGeometry(0.012, 0.012, len, 8), steelR, rx, 1.66, zc); bar.rotation.x = Math.PI / 2; add(bar);
+      const cols = ['#141414', '#7a5a3a', '#5a1a22', '#2c3a52', '#1d1d20', '#8b7d6b', '#3b2a20', '#101012'];
+      for (let i = 0; i < 7; i++) {
+        const z = zc - len / 2 + 0.12 + i * (len - 0.24) / 6 + Math.sin(i * 7.1) * 0.02, c = cols[(i + (zc > f(33) ? 3 : 0)) % cols.length];
+        add(M(new THREE.TorusGeometry(0.022, 0.003, 4, 10, Math.PI * 1.4), steelR, rx, 1.665, z).rotateY(Math.PI / 2));                  // hanger hook
+        const coat = new THREE.Group(); coat.position.set(rx, 1.6, z); coat.rotation.y = Math.PI / 2 + Math.sin(i * 3.3) * 0.1; add(coat);
+        coat.add(M(new THREE.BoxGeometry(0.46, 0.05, 0.05), std({ color: '#2a2622', roughness: 0.6 }), 0, 0.02, 0));                       // hanger
+        const body = M(new THREE.CylinderGeometry(0.2, 0.27, 0.85 + Math.sin(i * 2.7) * 0.15, 10, 1, true), std({ color: c, roughness: 0.85, side: THREE.DoubleSide }), 0, -0.45, 0);
+        body.scale.z = 0.32; coat.add(body);
+        const sh = M(new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), std({ color: c, roughness: 0.85 }), 0, -0.03, 0); sh.scale.set(1.15, 0.25, 0.4); coat.add(sh);   // shoulders
+      }
+      box(rx - 0.25, zc - len / 2 - 0.05, rx + 0.25, zc + len / 2 + 0.05);
+    }
     const fz1 = f(V.frontDoor.z1), fz2 = f(V.frontDoor.z2);
     const door = M(new THREE.BoxGeometry(0.05, 2.2, fz2 - fz1), std({ color: '#ece6dc', roughness: 0.6 }), L - 0.03, 1.1, (fz1 + fz2) / 2); add(door);
     for (const [y, hh] of [[1.55, 0.8], [0.55, 0.8]]) add(M(new THREE.BoxGeometry(0.02, hh, fz2 - fz1 - 0.25), std({ color: '#ddd5c8', roughness: 0.6 }), L - 0.065, y, (fz1 + fz2) / 2));
@@ -521,6 +542,7 @@ export function buildWorld(scene, Q) {
     floorSpk(f(12.2), f(10.8), Math.PI / 2 - 0.3); floorSpk(f(12.2), f(37.4), Math.PI / 2 + 0.3);
     const column = (x, z) => { add(M(new THREE.BoxGeometry(0.42, 1.2, 0.4), std({ color: '#0e0e0e', roughness: 0.5 }), x, 0.6, z)); for (const [y, r] of [[0.85, 0.12], [0.45, 0.12]]) add(M(new THREE.CircleGeometry(r, 20), std({ color: '#262626', roughness: 0.8 }), x + 0.21, y, z).rotateY(Math.PI / 2)); };
     column(f(3.0), f(28.6)); column(f(3.0), f(19.4));
+    add(flowerCluster(f(3.0), 1.2, f(28.6), 0.22));   // red flowers on top of the back speaker column (the plant behind the band is gone)
     // music stands in front of guitar and sax, two flutes on stands front and center, and a pedalboard
     const musicStand = (x, z, ry) => {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry;
@@ -537,11 +559,6 @@ export function buildWorld(scene, Q) {
     wedge(f(13.4), f(15.2));   // one floor monitor, front right
     const amp = (x, z) => { add(M(new THREE.BoxGeometry(0.35, 0.55, 0.6), std({ color: '#1a1a1a', roughness: 0.7 }), x, 0.275, z)); add(M(new THREE.PlaneGeometry(0.5, 0.4), std({ color: '#3a3330', roughness: 1 }), x + 0.176, 0.3, z).rotateY(Math.PI / 2)); };
     amp(f(7.6), f(31.2));
-    // tall plant
-    const plant = new THREE.Group(); plant.position.set(f(2.2), 0, f(26));
-    plant.add(M(new THREE.CylinderGeometry(0.22, 0.18, 0.5, 18), std({ color: '#d8d0c4', roughness: 0.7 }), 0, 0.25, 0));
-    for (let i = 0; i < 30; i++) { const lf = M(new THREE.SphereGeometry(0.12, 8, 6), std({ color: i % 3 ? '#2d4a26' : '#3b5f30', roughness: 0.8 }), Math.sin(i * 2.4) * (0.1 + i * 0.006), 0.6 + i * 0.05, Math.cos(i * 2.4) * (0.1 + i * 0.006)); lf.scale.set(1.3, 0.35, 0.6); lf.rotation.set(Math.sin(i * 1.7) * 0.9, i * 2.4, Math.cos(i * 1.3) * 0.7); plant.add(lf); }
-    add(plant);
     // musicians, facing the room
     for (const [role, xf, zf, turn] of [['guitar', 10.4, 28.6, 0.15], ['sax', 10.4, 19.4, -0.15], ['keys', 5.6, 31, 0.35], ['drums', 4.2, 24, 0], ['bass', 5.6, 16.6, -0.35]]) {
       const m = makeBandMember(role); m.root.position.set(f(xf), 0, f(zf)); m.root.rotation.y = Math.PI / 2 + turn; add(m.root); dynamic.add(m.root); band.push(m);

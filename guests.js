@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { buildPerson, toon, reach, animator } from './characters.js';
 import { paint } from './textures.js';
+import { makeSunny } from './sunny.js';
 
 const mesh = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; };
 const lathe = (pts, seg = 32, phi0 = 0, phiLen = Math.PI * 2) =>
@@ -156,26 +157,51 @@ function makeJoyce(ctx) {
   // small gold earrings
   const gold = new THREE.MeshStandardMaterial({ color: '#d8b25a', metalness: 1, roughness: 0.3 });
   for (const sd of [1, -1]) p.head.add(mesh(new THREE.SphereGeometry(0.009, 8, 6), gold, 0.104 * sd, 1.635 - 0.035, 0));
-  // a short clear glass with a pink drink in her right hand
-  const glass = new THREE.Group();
-  glass.add(mesh(new THREE.CylinderGeometry(0.034, 0.03, 0.08, 14, 1, true), new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.3, roughness: 0.1, side: THREE.DoubleSide })));
-  glass.add(mesh(new THREE.CylinderGeometry(0.031, 0.028, 0.05, 14), toon('#e9a6a0'), 0, -0.012, 0));
-  P.handR.add(glass); glass.position.set(0, -0.055, 0.02);
-  // stand by the welcome table, turned toward the door you walk in through
-  const x = 84.6 * FT, z = 20.1 * FT;
-  p.root.position.set(x, 0, z); p.root.rotation.y = Math.atan2(91 * FT - x, 14.7 * FT - z) - 0.35; scene.add(p.root);
-  W.colliders.push({ circle: [x, z], r: 0.32 });
-  const tag = ctx.labelSprite('Joyce', { size: 70 }); if (tag) { tag.position.set(x, 2.02, z); scene.add(tag); }
-  // hands together in front at the waist, glass held up a little
-  P.armR.rotation.set(-0.35, 0, -0.12); P.elbowR.rotation.set(-1.45, 0, 0);
-  P.armL.rotation.set(-0.3, 0, 0.12); P.elbowL.rotation.set(-1.25, 0, 0);
+  // Joyce is working the room: tidying the coat racks, straightening the welcome table and the dining tables.
+  // When you walk up she stops, turns, waves and says "Welcome!"
+  const stations = [
+    { at: [85.5, 19.2], look: [84.0, 17.9], h: 1.08, d: 0.34 },     // welcome table: straightening the cards and flowers
+    { at: [91.9, 31.6], look: [93.6, 31.6], h: 1.4, d: 0.36 },      // coat rack: neatening the coats
+    { at: [91.9, 35.6], look: [93.6, 35.6], h: 1.3, d: 0.36 },
+    { at: [87.5, 28.3], look: [85.9, 28.3], h: 0.8, d: 0.4 },       // end of a dining table: fixing a place setting
+    { at: [87.5, 35.5], look: [85.9, 35.5], h: 0.8, d: 0.4 },
+  ].map((o) => ({ ...o, at: [o.at[0] * FT, o.at[1] * FT], yaw: Math.atan2((o.look[0] - o.at[0]), (o.look[1] - o.at[1])) }));
+  const st = { x: stations[0].at[0], z: stations[0].at[1], yaw: stations[0].yaw, i: 0, mode: 'work', timer: 6, speed: 0, greetT: 0, greetedAt: -99 };
+  p.root.position.set(st.x, 0, st.z); p.root.rotation.y = st.yaw; scene.add(p.root);
+  const col = { circle: [st.x, st.z], r: 0.32 }; W.colliders.push(col);
+  const tag = ctx.labelSprite('Joyce', { size: 70 }); if (tag) { tag.position.set(0, 2.02 * 1.8 / 1.62, 0); p.root.add(tag); }
+  const hello = ctx.speechBubble ? ctx.speechBubble('Welcome!', { side: 'left' }) : null;
+  if (hello) { const m = new THREE.Object3D(); m.position.set(0, 1.575, 0.135); p.head.add(m); hello.anchors = [m]; }
+  const anim = animator(p), tgt = new THREE.Vector3(), poleR = new THREE.Vector3(-1, -0.5, -0.4), poleL = new THREE.Vector3(1, -0.5, -0.4);
+  const turn = (want, k) => { st.yaw += Math.atan2(Math.sin(want - st.yaw), Math.cos(want - st.yaw)) * Math.min(1, k); };
   return { update(dt, t) {
-    P.sway.rotation.z = Math.sin(t * 1.1) * 0.02;
-    P.neck.rotation.y = Math.sin(t * 0.35) * 0.35;
-    P.elbowR.rotation.x = -1.45 - Math.max(0, Math.sin(t * 0.5 - 1)) * 0.25;   // the odd sip-ready lift of the glass
-    // keep the glass standing upright in her hand whatever angle her wrist is at
-    p.root.updateWorldMatrix(true, true);
-    P.handR.getWorldQuaternion(_qa); p.root.getWorldQuaternion(_qb); glass.quaternion.copy(_qa.invert().multiply(_qb));
+    const P0 = ctx.player, live = ctx.isPlaying ? ctx.isPlaying() : true;
+    const toP = P0 ? Math.hypot(P0.x - st.x, P0.z - st.z) : 99;
+    if (live && st.mode !== 'greet' && toP < 3.4 && t - st.greetedAt > 45) { st.mode = 'greet'; st.greetT = 3.2; st.greetedAt = t; }
+    if (st.mode === 'greet') {               // turn to you, wave, "Welcome!"
+      st.speed = 0; turn(Math.atan2(P0.x - st.x, P0.z - st.z), dt * 6); st.greetT -= dt;
+      if (st.greetT <= 0) { st.mode = 'work'; st.timer = Math.max(st.timer, 3); }
+    } else if (st.mode === 'walk') {
+      const [tx, tz] = stations[st.i].at, dx = tx - st.x, dz = tz - st.z, d = Math.hypot(dx, dz);
+      if (d < 0.06) { st.mode = 'work'; st.timer = 6 + Math.random() * 5; st.speed = 0; }
+      else { turn(Math.atan2(dx, dz), dt * 5); const step = Math.min(d, 0.85 * dt); st.x += dx / d * step; st.z += dz / d * step; st.speed = step / Math.max(dt, 1e-4); }
+    } else {                                 // working at a station
+      st.speed = 0; turn(stations[st.i].yaw, dt * 4); st.timer -= dt;
+      if (st.timer <= 0) { st.i = (st.i + 1 + Math.floor(Math.random() * 2)) % stations.length; st.mode = 'walk'; }
+    }
+    p.root.position.set(st.x, 0, st.z); p.root.rotation.y = st.yaw; col.circle[0] = st.x; col.circle[1] = st.z;
+    anim(dt, st.speed, t, st.mode === 'greet' ? 'wave' : 'idle');
+    if (hello) hello.visible = st.mode === 'greet';
+    if (st.mode === 'work') {                // both hands busy at the station: small tidying moves
+      const s0 = stations[st.i], k = p.root.scale.y || 1;
+      p.root.updateWorldMatrix(true, true);
+      const h = s0.h / k, dd = s0.d / k;
+      const fx = Math.sin(t * 1.7) * 0.07, fy = Math.sin(t * 2.3) * 0.03;
+      tgt.set(-0.12 + fx, h + fy, dd); p.root.localToWorld(tgt); reach(P.armR, P.elbowR, tgt, poleR);
+      tgt.set(0.12 + fx * 0.6, h - fy, dd - 0.03); p.root.localToWorld(tgt); reach(P.armL, P.elbowL, tgt, poleL);
+      P.sway.rotation.x = s0.h < 1 ? 0.28 : 0.05;     // leans over the low dining tables
+      P.neck.rotation.x = s0.h < 1.2 ? 0.3 : 0.05;
+    } else { P.sway.rotation.x = 0; P.neck.rotation.x = 0; }
   } };
 }
 
@@ -250,12 +276,14 @@ function makeEmilio(ctx) {
   } };
 }
 
+
 export function placeGuests(ctx) {
   const { scene, W, FT } = ctx;
   const people = [];
   people.push(...makeCardTrick(ctx));
   people.push(makeJoyce(ctx));
   people.push(makeEmilio(ctx));
+  people.push(makeSunny(ctx));
 
   return (dt, t) => { for (const p of people) p.update(dt, t); };
 }
