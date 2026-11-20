@@ -144,9 +144,11 @@
   #booth .soon { grid-column: 1 / -1; text-align: center; font-size: 22px; font-style: italic; opacity: .8; margin-top: 18vh; }
   #boothBig { position: fixed; inset: 0; z-index: 21; background: rgba(8,3,3,.96); display: flex; align-items: center; justify-content: center; }
   #boothBig img { max-width: 88vw; max-height: 86vh; box-shadow: 0 0 0 8px #f3ede2, 0 20px 60px #000; }
-  #boothBig .prev, #boothBig .next { position: absolute; top: 50%; transform: translateY(-50%); font-size: 60px; padding: 14px; }
-  #boothBig .prev { left: 8px; } #boothBig .next { right: 8px; }
-  #boothBig .x { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); font-size: 46px; padding: 4px 12px; z-index: 1; }   /* close the full-size photo */
+  #boothBig .prev, #boothBig .next { position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; width: 58px; height: 58px; padding: 0 0 6px; border-radius: 50%; font-size: 46px; line-height: 1;
+    background: rgba(20,6,6,.7) !important; border: 2px solid rgba(255,225,194,.55) !important; box-shadow: 0 4px 14px rgba(0,0,0,.6); }   /* round buttons that stand out over the photo */
+  #boothBig .prev { left: max(10px, env(safe-area-inset-left)); } #boothBig .next { right: max(10px, env(safe-area-inset-right)); }
+  #boothBig button, #booth .x { touch-action: manipulation; cursor: pointer; }
+  #boothBig .x { position: absolute; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); font-size: 46px; padding: 4px 12px; z-index: 1; }   /* close the full-size photo */
   #boothBig .n { position: absolute; bottom: 16px; font-style: italic; opacity: .7; }
   /* always-on, see-through touch guides so guests know what to do */
   #touchHelp { position: fixed; inset: auto 0 0 0; height: 46vh; z-index: 4; pointer-events: none; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 5vw 6vh; }

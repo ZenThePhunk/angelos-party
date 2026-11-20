@@ -185,7 +185,8 @@ tyler.root.position.set(T.x, 0, T.z); scene.add(tyler.root);
 { const tag = labelSprite('Tyler', { size: 70 }); tag.position.set(0, 2.18, 0); tyler.root.add(tag); }
 const tylerBubble = speechBubble('Check out my photos!'); tylerBubble.anchors = [mouthAt(tyler.head)];   // the click/tap hint under the crosshair tells you how
 const tylerCollider = { circle: [T.x, T.z], r: 0.3 }; W.colliders.push(tylerCollider);
-W.readables.push({ obj: tyler.root, name: 'Tyler', open: 'tyler' });
+const tylerReadable = { obj: tyler.root, name: 'Tyler', open: 'tyler' }; W.readables.push(tylerReadable);
+const TYLER_NEAR = 3.2;   // walk this close and he stops what he's doing and turns to you
 // after you've looked through his photos, Tyler heads back out to keep shooting the party
 function tylerResume() { tylerOnRoute = false; T.state = 'walk'; T.greetedAt = clock.elapsedTime; T.wp = Math.floor(Math.random() * tylerSpots.length); }
 function cameraFlash() { const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
@@ -207,6 +208,10 @@ function updateTyler(dt, t) {
   };
   const faceP = () => { const want = Math.atan2(player.x - T.x, player.z - T.z); T.yaw += Math.atan2(Math.sin(want - T.yaw), Math.cos(want - T.yaw)) * Math.min(1, dt * 6); };
   let mode = 'idle';
+  // looking at his photos: he stands right there and waits for you
+  if (reading && galleryKey === 'tyler' && !$('#booth').hidden) { T.speed = 0; finishTyler(dt, t, mode, toP); return; }
+  // you walked up to him: he stops shooting/wandering and faces you so he's easy to tap
+  if (toP < TYLER_NEAR && (T.state === 'walk' || T.state === 'shoot')) { T.speed = 0; faceP(); finishTyler(dt, t, mode, toP); return; }
   if (playing && !reading && !tylerOnRoute && T.state !== 'hang' && T.state !== 'snapYou' && T.state !== 'seek' && toP < 2.5 && t - T.greetedAt > 150) { T.state = 'approach'; }   // only now and then, and only if you're already close by
   switch (T.state) {
     case 'walk': { const stop = tylerOnRoute ? tylerRoute[T.wp] : null; const [x, z] = stop ? stop.at : tylerSpots[T.wp]; if (goTo(x, z, 0.2, 1.05)) { T.state = 'shoot'; T.timer = 0; T.fired = false; T.look = stop ? stop.look : null; } break; }
@@ -224,9 +229,19 @@ function updateTyler(dt, t) {
     case 'snapYou': mode = 'shoot'; faceP(); T.timer += dt; if (!T.fired && T.timer > 0.8) { tyler.fire(); cameraFlash(); T.fired = true; } if (T.timer > 1.6) { T.state = 'hang'; T.greetedAt = t; } break;
     case 'hang': faceP(); if (toP > 5.5 || t - T.greetedAt > 8) { T.state = 'walk'; T.greetedAt = t; } break;   // chats for a few seconds, then gets back to shooting
   }
+  finishTyler(dt, t, mode, toP);
+}
+function finishTyler(dt, t, mode, toP) {
   tylerBubble.visible = ((T.state === 'hang' || (T.state === 'snapYou' && T.fired)) && toP < 5.5) || toP < 2.8;   // also whenever you walk up to him
   tyler.root.position.set(T.x, 0, T.z); tyler.root.rotation.y = T.yaw; tylerCollider.circle[0] = T.x; tylerCollider.circle[1] = T.z;
   tyler.update(dt, T.speed, t, mode);
+}
+// phones: while you're near Tyler and he's anywhere on screen, keep his photos button up (no need to aim right at him)
+const _ty = new THREE.Vector3();
+function tylerOnScreen() {
+  if (Math.hypot(player.x - T.x, player.z - T.z) > TYLER_NEAR) return false;
+  _ty.set(T.x, 1.3, T.z).project(camera);
+  return _ty.z < 1 && Math.abs(_ty.x) < 0.95 && Math.abs(_ty.y) < 1;
 }
 
 // start-screen portraits, drawn with the same 3D characters
@@ -347,7 +362,7 @@ const GALLERIES = {
 };
 async function openBooth(key = 'booth') {
   const G = GALLERIES[key];
-  reading = true; $('#booth').hidden = false; $('#booth .ttl').textContent = G.title; $('#booth').dataset.g = key;   // the photo booth shows whole strips, Tyler's shows squares
+  reading = true; $('#booth').hidden = false; fitBooth(); $('#booth .ttl').textContent = G.title; $('#booth').dataset.g = key;   // the photo booth shows whole strips, Tyler's shows squares
   if (document.pointerLockElement) { suppressPause = true; document.exitPointerLock(); }
   for (const k in keys) keys[k] = false;
   if (galleryKey !== key) {
@@ -361,21 +376,35 @@ async function openBooth(key = 'booth') {
 }
 function showBooth(i) {
   boothIdx = (i + boothPhotos.length) % boothPhotos.length;
-  $('#boothBig img').src = boothPhotos[boothIdx].full; $('#boothBig .n').textContent = `${boothIdx + 1} / ${boothPhotos.length}`; $('#boothBig').hidden = false;
+  $('#boothBig img').src = boothPhotos[boothIdx].full; $('#boothBig .n').textContent = `${boothIdx + 1} / ${boothPhotos.length}`; $('#boothBig').hidden = false; fitBooth();
   for (const n of [boothIdx + 1, boothIdx - 1]) new Image().src = boothPhotos[(n + boothPhotos.length) % boothPhotos.length].full;
 }
 function closeBooth() { if (!$('#boothBig').hidden) { $('#boothBig').hidden = true; return; } $('#booth').hidden = true; reading = false; if (galleryKey === 'tyler') tylerResume(); if (!isTouch) tryLock(); }
 $('#booth .x').onclick = () => { $('#boothBig').hidden = true; closeBooth(); };
-$('#boothBig .x').onclick = (e) => { e.stopPropagation(); $('#boothBig').hidden = true; };   // back to the grid of photos
-$('#boothBig').addEventListener('click', (e) => { if (e.target.closest('.prev')) showBooth(boothIdx - 1); else if (e.target.closest('.next')) showBooth(boothIdx + 1); else $('#boothBig').hidden = true; });
-addEventListener('keydown', (e) => {
-  if ($('#booth').hidden) return;
-  if (e.key === 'Escape') closeBooth();
-  else if (!$('#boothBig').hidden && e.key === 'ArrowRight') showBooth(boothIdx + 1);
-  else if (!$('#boothBig').hidden && e.key === 'ArrowLeft') showBooth(boothIdx - 1);
-});
-{ let sx = null; $('#boothBig').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
-  $('#boothBig').addEventListener('touchend', (e) => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 50) { e.stopPropagation(); showBooth(boothIdx + (dx < 0 ? 1 : -1)); } }); }
+// full-size viewer: arrows, close and tap-outside. Phones get handled right on the touch (no waiting on a click,
+// which some phones drop when sideways), and a sideways swipe flips photos too.
+function boothAct(t) {
+  if (t.closest('.x')) $('#boothBig').hidden = true;   // back to the grid of photos
+  else if (t.closest('.prev')) showBooth(boothIdx - 1);
+  else if (t.closest('.next')) showBooth(boothIdx + 1);
+  else if (!t.closest('img')) $('#boothBig').hidden = true;
+}
+$('#boothBig').addEventListener('click', (e) => { e.stopPropagation(); boothAct(e.target); });
+{ let sx = null, sy = null; $('#boothBig').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  $('#boothBig').addEventListener('touchend', (e) => {
+    if (sx === null) return; const t0 = e.changedTouches[0], dx = t0.clientX - sx, dy = t0.clientY - sy; sx = null;
+    e.preventDefault(); e.stopPropagation();   // we handle it here, so no extra click afterwards
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) showBooth(boothIdx + (dx < 0 ? 1 : -1));
+    else if (Math.hypot(dx, dy) < 14) boothAct(e.target);
+  }, { passive: false }); }
+$('#booth .x').addEventListener('touchend', (e) => { e.preventDefault(); $('#boothBig').hidden = true; closeBooth(); }, { passive: false });
+// keep the viewer exactly over the part of the screen you can see, even if the phone zoomed or shifted when it turned
+function fitBooth() {
+  const vv = window.visualViewport; if (!vv) return;
+  for (const el of [$('#booth'), $('#boothBig')]) Object.assign(el.style, { left: vv.offsetLeft + 'px', top: vv.offsetTop + 'px', width: vv.width + 'px', height: vv.height + 'px', right: 'auto', bottom: 'auto' });
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', fitBooth); visualViewport.addEventListener('scroll', fitBooth); }
+addEventListener('orientationchange', () => setTimeout(fitBooth, 350));
 
 function closeCard() { $('#reader').hidden = true; reading = false; if (!isTouch) tryLock(); }
 $('#reader').addEventListener('click', closeCard);
@@ -574,7 +603,7 @@ function frame() {
   for (const fn of W.tick) fn(dt, t);
 
   if (playing && isTouch && !reading) {            // phones: show a tap button for whatever is in the middle of the view
-    const r = readableAt(0, 0);
+    const r = readableAt(0, 0) || (tylerOnScreen() ? tylerReadable : null);
     if (r !== tapTarget) { tapTarget = r; $('#tapBtn').hidden = !r; if (r) $('#tapBtn').textContent = r.open === 'game' ? `▶ Tap to play ${r.name}` : r.open === 'booth' ? '📸 Tap to see the photo booth pictures' : r.open === 'tyler' ? "📷 Tap to see Tyler's photos" : r.open === 'pet' ? '🐾 Tap to pet Sunny' : `Tap to read the ${r.name.toLowerCase()}`; }
   } else if (tapTarget) { tapTarget = null; $('#tapBtn').hidden = true; }
   if (playing && !isTouch && !reading) { const r = locked() ? readableAt(0, 0) : readableAt(mouseN.x, mouseN.y); $('#readHint').hidden = !r; if (r) $('#readHint').textContent = r.open === 'game' ? `Click to play ${r.name}` : r.open === 'booth' ? 'Click to see the photo booth pictures' : r.open === 'tyler' ? "Click to see Tyler's photos" : r.open === 'pet' ? 'Click to pet Sunny' : `Click to read the ${r.name.toLowerCase()}`; }
