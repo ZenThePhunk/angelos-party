@@ -64,7 +64,11 @@
   #music .bar i { color: var(--amber); }
   #music button { background: none; border: 0; color: var(--cream); font-size: 18px; padding: 0 4px; opacity: .8; }
   #music .frame { position: relative; width: 200px; height: 200px; background: #000; }
-  #music .tap { position: absolute; inset: auto 0 0 0; padding: 6px; font-size: 13px; text-align: center; background: rgba(216,36,44,.85); pointer-events: none; }
+  #music .tap { display: block; width: 100%; padding: 6px 10px; font-size: 13px; text-align: center; background: rgba(216,36,44,.9); color: #fff; opacity: 1; }
+  #music { width: auto; max-width: 240px; }
+  #tvScreen { width: 640px; height: 360px; background: #000; pointer-events: none; }   /* the music video, hung on the garage door in 3D */
+  #tvScreen iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #css3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
   #music .show { display: none; }
   #music.min { width: auto; }
   #music.min .frame, #music.min .hide, #music.min .bar span { display: none; }
@@ -172,7 +176,7 @@
   #rotate .phone { width: 46px; height: 80px; border: 3px solid #ffe1c2; border-radius: 9px; animation: tip 2.2s ease-in-out infinite; }
   @keyframes tip { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
   #rotate button { background: none; border: 1px solid rgba(255,140,80,.5); color: var(--cream); border-radius: 99px; padding: 8px 18px; font-size: 15px; }
-  #music .unmute { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: rgba(216,36,44,.9); color: #fff; border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; opacity: 1; }
+  #music .unmute { display: block; width: 100%; margin: 0; border-radius: 0 !important; background: rgba(216,36,44,.9); color: #fff; border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; opacity: 1; }
   #flash { position: fixed; inset: 0; z-index: 9; background: #fff; opacity: 0; pointer-events: none; }
   #flash.go { animation: snap .55s ease-out; }
   @keyframes snap { 0% { opacity: .92; } 100% { opacity: 0; } }
@@ -254,8 +258,9 @@
 <div id="bestDressed" class="glowword" aria-hidden="true">Best Dressed</div>
 <div id="music" hidden>
   <div class="bar"><i>♪</i><span>Them Changes · Thundercat</span><button class="hide" title="Hide and pause">–</button><button class="show">Play the music</button></div>
-  <div class="frame"><div id="yt"></div><div class="tap" hidden>Tap the video to start the music</div><button class="unmute" hidden>🔊 Tap for sound</button></div>
+  <button class="tap" hidden>▶ Tap to start the music</button><button class="unmute" hidden>🔊 Tap for sound</button>
 </div>
+<div id="tvScreen"><div id="yt"></div></div>
 
 <script type="module" src="main.js"></script>
 </body>

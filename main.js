@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { VENUE, FT } from './venue.js';
 import { buildWorld } from './world.js';
 import { setAniso } from './textures.js';
@@ -259,7 +260,36 @@ function portrait(kind, close = false, turn = 0.25) {
 }
 // the start-screen pictures are pre-rendered files (images/couple-*.png, made by tools/make_portraits.sh) so they show instantly
 
-// ── music: "Them Changes" through YouTube's own player ──
+// ── music: "Them Changes" through YouTube's own player, playing on a big screen hung on the garage door ──
+const cssRenderer = new CSS3DRenderer(); cssRenderer.domElement.id = 'css3d'; cssRenderer.setSize(innerWidth || 1, innerHeight || 1);
+document.body.insertBefore(cssRenderer.domElement, $('#stage').nextSibling);
+const cssScene = new THREE.Scene();
+const TV = { w: 3.6, x: VENUE.length * FT - 0.1, y: 2.45, z: (VENUE.garageDoor.z1 + VENUE.garageDoor.z2) / 2 * FT };
+const tvObj = new CSS3DObject($('#tvScreen')); tvObj.position.set(TV.x, TV.y, TV.z); tvObj.rotation.y = -Math.PI / 2; tvObj.scale.setScalar(TV.w / 640); cssScene.add(tvObj);
+cssRenderer.render(cssScene, camera);   // moves the screen into the 3D layer now, before YouTube's player exists (moving it later reloads the video and restarts the song)
+{ // the screen's black frame and mounting, drawn in the room so it looks like a real TV on the door
+  const bez = new THREE.Mesh(new THREE.BoxGeometry(0.08, TV.w * 9 / 16 + 0.14, TV.w + 0.14), new THREE.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.4, metalness: 0.3 }));
+  bez.position.set(TV.x + 0.03, TV.y, TV.z); scene.add(bez);
+}
+// hide the video when a wall is between you and it (e.g. you're in the bathroom); checked a few times a second
+const _tvRay = new THREE.Raycaster(), _tvC = new THREE.Vector3(TV.x - 0.05, TV.y, TV.z), _tvD = new THREE.Vector3(); let tvCheck = 0;
+const _tvCorners = [-1, 1].flatMap((a) => [-1, 1].map((b) => new THREE.Vector3(TV.x - 0.05, TV.y + b * TV.w * 9 / 32, TV.z + a * TV.w / 2))), _tvP = new THREE.Vector3();
+const _frustum = new THREE.Frustum(), _pm = new THREE.Matrix4(), _tvBox = new THREE.Box3().setFromPoints(_tvCorners);
+let tvBlocked = false;
+function updateTV(dt) {
+  const el = cssRenderer.domElement;
+  if (!playing || reading) { el.style.visibility = 'hidden'; return; }
+  if ((tvCheck -= dt) <= 0) {   // a wall between you and the screen?
+    tvCheck = 0.25; _tvD.subVectors(_tvC, camera.position); const d = _tvD.length(); _tvRay.set(camera.position, _tvD.normalize()); _tvRay.far = d - 0.2;
+    tvBlocked = _tvRay.intersectObject(W.world, true).length > 0;
+  }
+  // only draw it when it's really in front of you (otherwise the browser draws it mirrored behind you)
+  camera.updateMatrixWorld(); _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _frustum.setFromProjectionMatrix(_pm);
+  let behind = false; for (const c of _tvCorners) { _tvP.copy(c).applyMatrix4(camera.matrixWorldInverse); if (_tvP.z > -0.15) { behind = true; break; } }
+  const show = !tvBlocked && !behind && _frustum.intersectsBox(_tvBox);
+  el.style.visibility = show ? 'visible' : 'hidden';
+  if (show) cssRenderer.render(cssScene, camera);
+}
 const SONG = 'GNCd_ERZvZM';
 let yt = null, ytReady = false, musicOn = false;
 window.onYouTubeIframeAPIReady = () => {
@@ -267,7 +297,7 @@ window.onYouTubeIframeAPIReady = () => {
     videoId: SONG, width: '100%', height: '100%',
     playerVars: { playsinline: 1, rel: 0, loop: 1, playlist: SONG },
     events: {
-      onReady: () => { ytReady = true; if (playing && !$('#music').classList.contains('min')) startMusic(); },
+      onReady: () => { ytReady = true; if (playing) { if (!$('#music').classList.contains('min')) startMusic(); } else { yt.mute(); yt.playVideo(); } },   // on the Enter screen the song already rolls (silently); Enter turns the sound on
       onError: (e) => { window.__ytError = e.data; console.warn('YouTube error', e.data); },
       onStateChange: (e) => { musicOn = e.data === YT.PlayerState.PLAYING; $('#music').classList.toggle('on', musicOn); if (musicOn) $('#music .tap').hidden = true; },
     },
@@ -279,8 +309,10 @@ function startMusic() {
   yt.setVolume(60); if (params.has('muted')) yt.mute(); else yt.unMute();
   yt.playVideo();
   // browsers sometimes refuse sound until you tap: fall back to playing muted with a "tap for sound" chip
-  setTimeout(() => { if (!musicOn && !$('#music').classList.contains('min')) { yt.mute(); yt.playVideo(); setTimeout(() => { if (musicOn && !params.has('muted')) $('#music .unmute').hidden = false; else if (!musicOn) $('#music .tap').hidden = false; }, 1200); } }, 1500);
+  setTimeout(() => { if (musicOn && yt.isMuted() && !params.has('muted')) { $('#music .unmute').hidden = false; return; }   // still rolling from the Enter screen but the browser kept it silent
+    if (!musicOn && !$('#music').classList.contains('min')) { yt.mute(); yt.playVideo(); setTimeout(() => { if (musicOn && !params.has('muted')) $('#music .unmute').hidden = false; else if (!musicOn) $('#music .tap').hidden = false; }, 1200); } }, 1500);
 }
+$('#music .tap').onclick = (e) => { e.stopPropagation(); if (!ytReady) return; yt.unMute(); yt.setVolume(60); yt.playVideo(); $('#music .tap').hidden = true; };
 $('#music .unmute').onclick = (e) => { e.stopPropagation(); yt.unMute(); yt.setVolume(60); $('#music .unmute').hidden = true; };
 $('#music .hide').onclick = () => { $('#music').classList.add('min'); if (ytReady) yt.pauseVideo(); };
 $('#music .show').onclick = () => { $('#music').classList.remove('min'); startMusic(); };
@@ -510,7 +542,7 @@ function fitView() {
   const w = innerWidth, h = innerHeight; if (!w || !h) return;
   const s = renderer.getSize(new THREE.Vector2()); if (s.x === w && s.y === h) return;
   camera.aspect = w / h; camera.updateProjectionMatrix();
-  renderer.setSize(w, h); composer.setSize(w, h); bloom.resolution.set(w * Q.bloomScale, h * Q.bloomScale);
+  renderer.setSize(w, h); cssRenderer.setSize(w, h); composer.setSize(w, h); bloom.resolution.set(w * Q.bloomScale, h * Q.bloomScale);
 }
 addEventListener('resize', fitView);
 
@@ -612,7 +644,7 @@ function frame() {
   glowLabel(glowFlowers, dt); glowLabel(glowKristin, dt);
   for (const tg of nameTags) { tg.getWorldPosition(_fp); const dx = _fp.x - camera.position.x, dz = _fp.z - camera.position.z; tg.visible = !playing || dx * dx + dz * dz < 4.2 * 4.2; }   // names only up close (about 14 ft)
   updateBubbles();
-  if (!arcadeOpen) composer.render();
+  if (!arcadeOpen) { composer.render(); updateTV(dt); }
 
   // if the computer is struggling, drop the floor reflections
   if (!checked && playing) { frames++; if (dt > 1 / 32) slowTime += dt; if (frames > 150) { checked = true; if (slowTime > 2.2) W.dropReflections(); } }
