@@ -554,17 +554,27 @@ $('#enter').addEventListener('click', () => {
 });
 
 let rotateDismissed = false;
+// opened from Instagram/Facebook/TikTok etc.: their built-in browser is stuck upright, so offer the phone's real browser
+const inApp = /Instagram|FBAN|FBAV|FB_IAB|Line\/|TikTok|musical_ly|Snapchat/i.test(navigator.userAgent);
+if (inApp) {
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent), here = location.host + location.pathname;
+  const url = isIOS ? 'x-safari-https://' + here : `intent://${here}#Intent;scheme=https;end`;
+  for (const a of document.querySelectorAll('.openReal')) { a.href = url; a.textContent = isIOS ? '🧭 Open in Safari to turn sideways' : '🌐 Open in Chrome to turn sideways'; a.hidden = false; }
+}
 function checkRotate() { $('#rotate').hidden = !(isTouch && playing && !rotateDismissed && innerHeight > innerWidth); }
 addEventListener('resize', checkRotate); addEventListener('orientationchange', () => setTimeout(checkRotate, 300));
 $('#rotate button').onclick = () => { rotateDismissed = true; checkRotate(); };
 
 function fitView() {
   const w = innerWidth, h = innerHeight; if (!w || !h) return;
+  camera.aspect = w / h;
+  // phone held upright: widen the view so it isn't a narrow slice (Instagram's browser can't turn sideways)
+  camera.fov = w >= h ? 68 : Math.min(95, THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(30)) / camera.aspect)));
+  camera.updateProjectionMatrix();
   const s = renderer.getSize(new THREE.Vector2()); if (s.x === w && s.y === h) return;
-  camera.aspect = w / h; camera.updateProjectionMatrix();
   renderer.setSize(w, h); cssRenderer.setSize(w, h); composer.setSize(w, h); bloom.resolution.set(w * Q.bloomScale, h * Q.bloomScale);
 }
-addEventListener('resize', fitView);
+addEventListener('resize', fitView); fitView();
 
 // ── movement + collisions ──
 const PR = 0.28;

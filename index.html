@@ -186,6 +186,8 @@
   #tapBtn { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 6; background: rgba(216,36,44,.85); color: #fff3e8; border: 1px solid rgba(255,170,130,.8); border-radius: 99px; padding: 10px 22px; font-size: 17px; box-shadow: 0 6px 22px rgba(0,0,0,.5); }
   #rotate { position: fixed; inset: 0; z-index: 30; background: rgba(10,3,3,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; font-size: 22px; font-style: italic; }
   #rotate small { font-size: 15px; opacity: .75; }
+  .openReal { display: inline-block; background: rgba(216,36,44,.9); color: #fff3e8; border: 1px solid rgba(255,170,130,.8); border-radius: 99px; padding: 9px 18px; font-size: 15px; font-style: normal; text-decoration: none; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+  .openReal[hidden] { display: none; }
   #rotate .phone { width: 46px; height: 80px; border: 3px solid #ffe1c2; border-radius: 9px; animation: tip 2.2s ease-in-out infinite; }
   @keyframes tip { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
   #rotate button { background: none; border: 1px solid rgba(255,140,80,.5); color: var(--cream); border-radius: 99px; padding: 8px 18px; font-size: 15px; }
@@ -212,6 +214,7 @@
   <ul class="todo"><li>Talk to Tyler to view Party Photos</li><li>Click the Photo Booth to View Photos</li><li>Interact with the Games</li></ul>
   <div class="couple"><img id="couple-a" src="images/couple-austin.png" alt="Cartoon Austin"><img id="couple-b" src="images/couple-bre.png" alt="Cartoon Bre"></div>
   <button id="enter">Enter</button>
+  <a class="openReal" hidden></a>
   <div class="note">Best with sound on 🎷</div>
 </div>
 
@@ -235,7 +238,7 @@
 </div>
 <button id="tapBtn" hidden></button>
 <div id="flash"></div>
-<div id="rotate" hidden><div class="phone"></div><p>Turn your phone sideways<br><small>for the best view of the party</small></p><button>Continue anyway</button></div>
+<div id="rotate" hidden><div class="phone"></div><p>Turn your phone sideways<br><small>for the best view of the party</small></p><a class="openReal" hidden></a><button>Continue anyway</button></div>
 <div id="joy" hidden><div class="knob"></div></div>
 <div id="touchHelp" hidden>
   <div class="move"><div class="ring"><div class="knob"></div></div><span>Drag here to walk</span></div>
