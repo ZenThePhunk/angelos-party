@@ -562,7 +562,13 @@ const inApp = /Instagram|FBAN|FBAV|FB_IAB|Line\/|TikTok|musical_ly|Snapchat/i.te
 if (inApp) {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent), here = location.host + location.pathname;
   const url = isIOS ? 'x-safari-https://' + here : `intent://${here}#Intent;scheme=https;end`;
-  for (const a of document.querySelectorAll('.openReal')) { a.href = url; a.textContent = isIOS ? '🧭 Open in Safari to turn sideways' : '🌐 Open in Chrome to turn sideways'; a.hidden = false; }
+  const tip = isIOS ? 'Tap <b>⋯</b> in the top-right corner, then <b>“Open in external browser”</b>' : 'Tap <b>⋮</b> in the top-right corner, then <b>“Open in Chrome”</b>';
+  for (const a of document.querySelectorAll('.openReal')) {
+    a.href = url; a.textContent = isIOS ? '🧭 Open in Safari to turn sideways' : '🌐 Open in Chrome to turn sideways'; a.hidden = false;
+    const t = document.createElement('p'); t.className = 'openTip'; t.innerHTML = tip; t.hidden = true; a.after(t);
+    // Instagram blocks the jump on some phones: if we're still here a moment later, show how to do it from Instagram's menu
+    a.addEventListener('click', () => setTimeout(() => { if (document.visibilityState === 'visible') for (const x of document.querySelectorAll('.openTip')) x.hidden = false; }, 900));
+  }
 }
 function checkRotate() { $('#rotate').hidden = !(isTouch && playing && !rotateDismissed && innerHeight > innerWidth); }
 addEventListener('resize', checkRotate); addEventListener('orientationchange', () => setTimeout(checkRotate, 300));
