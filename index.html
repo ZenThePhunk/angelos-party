@@ -31,7 +31,7 @@
   #start h1 { margin: 0; font-family: var(--script); font-weight: 400; font-size: clamp(64px, 12vw, 140px); line-height: .95; color: #ffe1c2;
     text-shadow: 0 0 18px rgba(255,140,60,.55), 0 0 60px rgba(255,60,30,.35); }
   #start p { margin: 0; font-style: italic; font-size: clamp(16px, 2.2vw, 22px); opacity: .9; }
-  #start .todo { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: clamp(13px, 1.6vw, 16px); color: #ffe1c2; opacity: .85; }
+  #start .todo { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font-size: clamp(13px, 1.6vw, 16px); color: #ffe1c2; opacity: .85; }
   #start .todo li::before { content: '•'; color: var(--amber); margin-right: 7px; }
   .picks { display: flex; gap: clamp(14px, 4vw, 44px); margin-top: 1vh; }
   .pick { width: clamp(140px, 21vw, 220px); padding: 10px 10px 16px; border-radius: 18px; color: var(--cream); background: rgba(255,240,230,.05);
@@ -56,8 +56,8 @@
   #hint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(20,6,6,.72); padding: 10px 18px; border-radius: 12px; font-size: 16px; text-align: center; width: max-content; max-width: 92vw; transition: opacity 1.2s; }
   #hint b { color: var(--amber); font-weight: 600; }
   #hint.fade { opacity: 0; }
-  #joy { position: fixed; width: 110px; height: 110px; margin: -55px; border-radius: 50%; border: 2px solid rgba(255,230,210,.4); background: rgba(255,230,210,.08); z-index: 6; pointer-events: none; }
-  #joy .knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px; border-radius: 50%; background: rgba(255,230,210,.55); }
+  #joy { position: fixed; width: 88px; height: 88px; margin: -44px; border-radius: 50%; border: 2px solid rgba(255,230,210,.4); background: rgba(255,230,210,.08); z-index: 6; pointer-events: none; }
+  #joy .knob { position: absolute; left: 50%; top: 50%; width: 37px; height: 37px; margin: -18.5px; border-radius: 50%; background: rgba(255,230,210,.55); }
   #pause { position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; background: rgba(10,3,3,.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
   #pause .panel { display: flex; flex-direction: column; gap: 10px; align-items: stretch; min-width: 260px; padding: 22px 26px; border-radius: 18px; background: rgba(24,8,8,.85); border: 1px solid rgba(255,140,80,.4); text-align: center; }
   #pause .ttl { font-family: var(--script); font-size: 48px; color: #ffe1c2; line-height: 1; margin-bottom: 4px; }
@@ -168,18 +168,18 @@
   /* always-on, see-through touch guides so guests know what to do */
   #touchHelp { position: fixed; inset: auto 0 0 0; height: 46vh; z-index: 4; pointer-events: none; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 5vw 6vh; }
   #touchHelp .move, #touchHelp .look { display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: .45; transition: opacity .3s; }
-  #touchHelp .ring { width: 110px; height: 110px; border-radius: 50%; border: 2px solid rgba(255,230,210,.75); background: rgba(255,230,210,.1); position: relative; display: flex; align-items: center; justify-content: center; }
-  #touchHelp .ring .knob { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,230,210,.6); }
-  #touchHelp .arrows { font-size: 34px; color: rgba(255,230,210,.85); letter-spacing: 8px; }
-  #touchHelp span { font-size: 14px; text-align: center; text-shadow: 0 1px 6px #000; color: #ffe9d8; }
+  #touchHelp .ring { width: 88px; height: 88px; border-radius: 50%; border: 2px solid rgba(255,230,210,.75); background: rgba(255,230,210,.1); position: relative; display: flex; align-items: center; justify-content: center; }
+  #touchHelp .ring .knob { width: 35px; height: 35px; border-radius: 50%; background: rgba(255,230,210,.6); }
+  #touchHelp .arrows { font-size: 27px; color: rgba(255,230,210,.85); letter-spacing: 8px; }
+  #touchHelp span { font-size: 11px; text-align: center; text-shadow: 0 1px 6px #000; color: #ffe9d8; }
   #touchHelp.walking .move, #touchHelp.looking .look { opacity: .12; }
   @media (pointer: coarse) { #keys { display: none; } #brand { display: none; } #hint { display: none; } #music { left: 8px; top: 8px; bottom: auto; } }
   /* phones held sideways: keep the whole start screen on screen */
   @media (max-height: 500px) {
     #start { gap: 4px; padding: 8px; overflow-y: auto; }
-    #start h1 { font-size: 54px; } #start p { font-size: 14px; } #start .todo { font-size: 12px; gap: 2px 12px; } #start .kicker, #start .note { display: none; }
+    #start h1 { font-size: 54px; } #start p { font-size: 14px; } #start .todo { font-size: 12px; gap: 0; line-height: 1.25; } #start .kicker, #start .note { display: none; }
     .couple img { width: 78px; } #enter { font-size: 32px; padding: .38em 1.1em .09em 1em; margin-top: 4px; }
-    #touchHelp { height: 60vh; padding-bottom: 4vh; } #touchHelp .ring { width: 86px; height: 86px; } #touchHelp span { font-size: 12px; }
+    #touchHelp { height: 60vh; padding-bottom: 4vh; } #touchHelp .ring { width: 69px; height: 69px; } #touchHelp span { font-size: 10px; }
   }
   #tapBtn { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 6; background: rgba(216,36,44,.85); color: #fff3e8; border: 1px solid rgba(255,170,130,.8); border-radius: 99px; padding: 10px 22px; font-size: 17px; box-shadow: 0 6px 22px rgba(0,0,0,.5); }
   #rotate { position: fixed; inset: 0; z-index: 30; background: rgba(10,3,3,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; font-size: 22px; font-style: italic; }

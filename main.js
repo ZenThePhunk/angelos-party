@@ -510,7 +510,7 @@ canvas.addEventListener('touchstart', (e) => {
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   for (const t of e.changedTouches) {
-    if (joy && t.identifier === joy.id) { let dx = t.clientX - joy.x0, dy = t.clientY - joy.y0; const d = Math.hypot(dx, dy); if (d > 55) { dx *= 55 / d; dy *= 55 / d; } joy.dx = dx; joy.dy = dy; knob.style.transform = `translate(${dx}px,${dy}px)`; }
+    if (joy && t.identifier === joy.id) { let dx = t.clientX - joy.x0, dy = t.clientY - joy.y0; const d = Math.hypot(dx, dy); if (d > 44) { dx *= 44 / d; dy *= 44 / d; } joy.dx = dx; joy.dy = dy; knob.style.transform = `translate(${dx}px,${dy}px)`; }
     else if (lookT && t.identifier === lookT.id) { look((t.clientX - lookT.x) * 5.04, (t.clientY - lookT.y) * 4.08); lookT.x = t.clientX; lookT.y = t.clientY; }
   }
 }, { passive: false });
@@ -583,7 +583,7 @@ function frame() {
     if (keys.KeyD) st += 1;
     if (keys.ArrowLeft) turn += 1;
     if (keys.ArrowRight) turn -= 1;
-    if (joy) { fw -= joy.dy / 55; st += joy.dx / 55; }
+    if (joy) { fw -= joy.dy / 44; st += joy.dx / 44; }
     const mag = Math.hypot(fw, st); if (mag > 1) { fw /= mag; st /= mag; }
     player.yaw += turn * 2.1 * dt;
     const sp = keys.ShiftLeft || keys.ShiftRight ? 4.6 : 2.6, sn = Math.sin(player.yaw), cs = Math.cos(player.yaw);
