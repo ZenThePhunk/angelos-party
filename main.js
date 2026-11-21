@@ -20,7 +20,7 @@ const Q = low
   : { reflections: true, strands: 2200, discoLights: 3, discoIntensity: 30, shadow: 512, lowLights: false, pixelRatio: Math.min(devicePixelRatio, 2), bloomScale: 1 };
 
 // ── renderer + post effects ──
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: true });   // alpha: the music screen shows through a window cut in the room
 renderer.setPixelRatio(Q.pixelRatio);
 renderer.setSize(innerWidth || 1, innerHeight || 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -269,7 +269,27 @@ const tvObj = new CSS3DObject($('#tvScreen')); tvObj.position.set(TV.x, TV.y, TV
 cssRenderer.render(cssScene, camera);   // moves the screen into the 3D layer now, before YouTube's player exists (moving it later reloads the video and restarts the song)
 { // the screen's black frame and mounting, drawn in the room so it looks like a real TV on the door
   const bez = new THREE.Mesh(new THREE.BoxGeometry(0.08, TV.w * 9 / 16 + 0.14, TV.w + 0.14), new THREE.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.4, metalness: 0.3 }));
-  bez.position.set(TV.x + 0.03, TV.y, TV.z); scene.add(bez);
+  bez.position.set(TV.x + 0.03, TV.y, TV.z); scene.add(bez); TV.bez = bez;
+}
+// The video sits BEHIND the 3D room; each frame we cut a screen-shaped window in the room so it shows through.
+// People are drawn into the depth first, so anyone standing in front of the screen covers it like a real TV.
+const punchScene = new THREE.Scene();
+const punch = new THREE.Mesh(new THREE.PlaneGeometry(TV.w, TV.w * 9 / 16), new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, blending: THREE.NoBlending, depthWrite: false }));
+punch.position.set(TV.x - 0.005, TV.y, TV.z); punch.rotation.y = -Math.PI / 2; punchScene.add(punch);
+const depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false });
+function punchTV() {
+  const bg = scene.background, sh = renderer.shadowMap.autoUpdate;
+  renderer.autoClear = false; renderer.clearDepth();
+  scene.background = null; scene.overrideMaterial = depthOnly; renderer.shadowMap.autoUpdate = false;
+  W.world.visible = false; TV.bez.visible = false; camera.layers.disable(1);
+  renderer.render(scene, camera);   // just the people (and other moving things) into the depth buffer
+  camera.layers.enable(1); W.world.visible = true; TV.bez.visible = true;
+  scene.overrideMaterial = null; scene.background = bg; renderer.shadowMap.autoUpdate = sh;
+  renderer.render(punchScene, camera);   // the window: see-through wherever nobody is in front of it
+  // name tags float over everything, so draw them back on top of the window
+  scene.background = null; W.world.visible = false; camera.layers.set(1); renderer.render(scene, camera);
+  camera.layers.set(0); camera.layers.enable(1); W.world.visible = true; scene.background = bg;
+  renderer.autoClear = true;
 }
 // hide the video when a wall is between you and it (e.g. you're in the bathroom); checked a few times a second
 const _tvRay = new THREE.Raycaster(), _tvC = new THREE.Vector3(TV.x - 0.05, TV.y, TV.z), _tvD = new THREE.Vector3(); let tvCheck = 0;
@@ -288,7 +308,7 @@ function updateTV(dt) {
   let behind = false; for (const c of _tvCorners) { _tvP.copy(c).applyMatrix4(camera.matrixWorldInverse); if (_tvP.z > -0.15) { behind = true; break; } }
   const show = !tvBlocked && !behind && _frustum.intersectsBox(_tvBox);
   el.style.visibility = show ? 'visible' : 'hidden';
-  if (show) cssRenderer.render(cssScene, camera);
+  if (show) { cssRenderer.render(cssScene, camera); punchTV(); }
 }
 const SONG = 'GNCd_ERZvZM';
 let yt = null, ytReady = false, musicOn = false;
