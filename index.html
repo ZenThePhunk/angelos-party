@@ -22,6 +22,8 @@
   #start h1 { margin: 0; font-family: var(--script); font-weight: 400; font-size: clamp(64px, 12vw, 140px); line-height: .95; color: #ffe1c2;
     text-shadow: 0 0 18px rgba(255,140,60,.55), 0 0 60px rgba(255,60,30,.35); }
   #start p { margin: 0; font-style: italic; font-size: clamp(16px, 2.2vw, 22px); opacity: .9; }
+  #start .todo { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: clamp(13px, 1.6vw, 16px); color: #ffe1c2; opacity: .85; }
+  #start .todo li::before { content: '•'; color: var(--amber); margin-right: 7px; }
   .picks { display: flex; gap: clamp(14px, 4vw, 44px); margin-top: 1vh; }
   .pick { width: clamp(140px, 21vw, 220px); padding: 10px 10px 16px; border-radius: 18px; color: var(--cream); background: rgba(255,240,230,.05);
     border: 1px solid rgba(255,140,80,.4); transition: transform .2s, background .2s, border-color .2s, box-shadow .2s; }
@@ -166,7 +168,7 @@
   /* phones held sideways: keep the whole start screen on screen */
   @media (max-height: 500px) {
     #start { gap: 4px; padding: 8px; overflow-y: auto; }
-    #start h1 { font-size: 54px; } #start p { font-size: 14px; } #start .kicker, #start .note { display: none; }
+    #start h1 { font-size: 54px; } #start p { font-size: 14px; } #start .todo { font-size: 12px; gap: 2px 12px; } #start .kicker, #start .note { display: none; }
     .couple img { width: 78px; } #enter { font-size: 32px; padding: .38em 1.1em .09em 1em; margin-top: 4px; }
     #touchHelp { height: 60vh; padding-bottom: 4vh; } #touchHelp .ring { width: 86px; height: 86px; } #touchHelp span { font-size: 12px; }
   }
@@ -197,6 +199,7 @@
   <div class="kicker">Come on in</div>
   <h1>The Angelos</h1>
   <p>Austin &amp; Bre's Wedding Party. Vibe Coded by Austin</p>
+  <ul class="todo"><li>Talk to Tyler to view Party Photos</li><li>Click the Photo Booth to View Photos</li><li>Interact with the Games</li></ul>
   <div class="couple"><img id="couple-a" src="images/couple-austin.png" alt="Cartoon Austin"><img id="couple-b" src="images/couple-bre.png" alt="Cartoon Bre"></div>
   <button id="enter">Enter</button>
   <div class="note">Best with sound on 🎷</div>
