@@ -323,7 +323,7 @@ window.onYouTubeIframeAPIReady = () => {
     },
   });
 };
-{ const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); }
+function loadYouTube() { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); }   // started once the room is built, so the two don't fight over a phone's speed
 function startMusic() {
   if (!ytReady) return;
   yt.setVolume(60); if (params.has('muted')) yt.mute(); else yt.unMute();
@@ -555,7 +555,10 @@ $('#enter').addEventListener('click', () => {
 
 let rotateDismissed = false;
 // opened from Instagram/Facebook/TikTok etc.: their built-in browser is stuck upright, so offer the phone's real browser
-const inApp = /Instagram|FBAN|FBAV|FB_IAB|Line\/|TikTok|musical_ly|Snapchat/i.test(navigator.userAgent);
+const _ua = navigator.userAgent;
+const inApp = /Instagram|FBAN|FBAV|FB_IAB|Line\/|TikTok|musical_ly|Snapchat/i.test(_ua)
+  || (/iPhone|iPad|iPod/i.test(_ua) && !/Safari\//.test(_ua))   // iPhone in-app browsers leave out the "Safari/" tag that Safari, Chrome and Firefox all have
+  || /; wv\)/.test(_ua);                                          // Android in-app browsers mark themselves "wv"
 if (inApp) {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent), here = location.host + location.pathname;
   const url = isIOS ? 'x-safari-https://' + here : `intent://${here}#Intent;scheme=https;end`;
@@ -681,5 +684,6 @@ function frame() {
   requestAnimationFrame(frame);
 }
 frame();
-document.body.classList.add('ready');
+document.body.classList.add('ready'); window.__readyAt = performance.now();
+setTimeout(loadYouTube, 50);
 window.__venue = { openCard, portrait, player, camera, scene, W, toggleView, renderer, T, tylerBubble };

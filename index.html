@@ -47,6 +47,8 @@
     background: rgba(216,36,44,.55); border: 1px solid rgba(255,150,100,.7); box-shadow: 0 0 30px rgba(216,36,44,.45); transition: transform .2s, background .2s; }
   #enter:hover, #enter:focus-visible { transform: translateY(-3px); background: rgba(216,36,44,.8); outline: none; }
   body:not(.ready) #enter { opacity: .3; pointer-events: none; }
+  #enter .wait { display: none; font-family: var(--serif); font-style: italic; font-size: .42em; }
+  body:not(.ready) #enter .go { display: none; } body:not(.ready) #enter .wait { display: inline; } body:not(.ready) #enter { opacity: .6; }
   #start .note { font-size: 13px; opacity: .6; font-style: italic; }
 
   #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
@@ -204,16 +206,32 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
+<!-- download all the 3D code at once (phones on cell data were fetching it one file after another) -->
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/EffectComposer.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/RenderPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/UnrealBloomPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/OutputPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/renderers/CSS3DRenderer.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/objects/Reflector.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js" crossorigin>
+<link rel="modulepreload" href="venue.js">
+<link rel="modulepreload" href="world.js">
+<link rel="modulepreload" href="textures.js">
+<link rel="modulepreload" href="characters.js">
+<link rel="modulepreload" href="guests.js">
+<link rel="modulepreload" href="tattoo.js">
+<link rel="modulepreload" href="sunny.js">
 </head>
 <body>
 <div id="stage"></div>
 
 <div id="start">
-  <h1><img class="logo" src="images/title-logo-glow.png" alt="The Angelos"></h1>
+  <h1><img class="logo" src="images/title-logo-glow.webp" alt="The Angelos"></h1>
   <p>Austin &amp; Bre's Wedding Party. Vibe Coded by Austin</p>
   <ul class="todo"><li>Talk to Tyler to view Party Photos</li><li>Click the Photo Booth to View Photos</li><li>Interact with the Games</li></ul>
   <div class="couple"><img id="couple-a" src="images/couple-austin.png" alt="Cartoon Austin"><img id="couple-b" src="images/couple-bre.png" alt="Cartoon Bre"></div>
-  <button id="enter">Enter</button>
+  <button id="enter"><span class="go">Enter</span><span class="wait">Setting up the party…</span></button>
   <a class="openReal" hidden></a>
   <div class="note">Best with sound on 🎷</div>
 </div>
@@ -278,6 +296,6 @@
 </div>
 <div id="tvScreen"><div id="yt"></div></div>
 
-<script type="module" src="main.js"></script>
+<script type="module" src="main.js?v=3"></script>
 </body>
 </html>
