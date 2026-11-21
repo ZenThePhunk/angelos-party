@@ -28,6 +28,7 @@
     background: radial-gradient(ellipse at 50% 35%, rgba(120,16,18,.78), rgba(10,3,3,.96) 70%); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: opacity .8s; }
   #start.gone { opacity: 0; pointer-events: none; }
   #start .kicker { letter-spacing: .4em; text-transform: uppercase; font-size: 12px; color: var(--amber); }
+  #start h1 .logo { display: block; width: clamp(240px, 36vw, 440px); max-height: 30vh; object-fit: contain; margin: 0 auto; filter: drop-shadow(0 0 14px rgba(255,120,60,.55)) drop-shadow(0 0 3px rgba(255,170,110,.6)); }
   #start h1 { margin: 0; font-family: var(--script); font-weight: 400; font-size: clamp(64px, 12vw, 140px); line-height: .95; color: #ffe1c2;
     text-shadow: 0 0 18px rgba(255,140,60,.55), 0 0 60px rgba(255,60,30,.35); }
   #start p { margin: 0; font-style: italic; font-size: clamp(16px, 2.2vw, 22px); opacity: .9; }
@@ -177,7 +178,7 @@
   /* phones held sideways: keep the whole start screen on screen */
   @media (max-height: 500px) {
     #start { gap: 4px; padding: 8px; overflow-y: auto; }
-    #start h1 { font-size: 54px; } #start p { font-size: 14px; } #start .todo { font-size: 12px; gap: 0; line-height: 1.25; } #start .kicker, #start .note { display: none; }
+    #start h1 { font-size: 54px; } #start h1 .logo { width: auto; height: 84px; max-height: none; } #start p { font-size: 14px; } #start .todo { font-size: 12px; gap: 0; line-height: 1.25; } #start .kicker, #start .note { display: none; }
     .couple img { width: 78px; } #enter { font-size: 32px; padding: .38em 1.1em .09em 1em; margin-top: 4px; }
     #touchHelp { height: 60vh; padding-bottom: 4vh; } #touchHelp .ring { width: 69px; height: 69px; } #touchHelp span { font-size: 10px; }
   }
@@ -205,8 +206,7 @@
 <div id="stage"></div>
 
 <div id="start">
-  <div class="kicker">Come on in</div>
-  <h1>The Angelos</h1>
+  <h1><img class="logo" src="images/title-logo.png" alt="The Angelos"></h1>
   <p>Austin &amp; Bre's Wedding Party. Vibe Coded by Austin</p>
   <ul class="todo"><li>Talk to Tyler to view Party Photos</li><li>Click the Photo Booth to View Photos</li><li>Interact with the Games</li></ul>
   <div class="couple"><img id="couple-a" src="images/couple-austin.png" alt="Cartoon Austin"><img id="couple-b" src="images/couple-bre.png" alt="Cartoon Bre"></div>
